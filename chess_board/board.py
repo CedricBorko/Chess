@@ -9,6 +9,7 @@ from pieces.pawn import Pawn
 from pieces.piece import Alliance
 from pieces.queen import Queen
 from pieces.rook import Rook
+from player.player import BlackPlayer, WhitePlayer
 
 
 class BoardModel(QAbstractListModel):
@@ -16,12 +17,15 @@ class BoardModel(QAbstractListModel):
     def __init__(self):
         super().__init__()
 
-        self.board = self.standard_board()
-        self.white_pieces = self.active_pieces(Alliance.White)
-        self.black_pieces = self.active_pieces(Alliance.Black)
+        self.board = []
+        self.white_pieces = []
+        self.black_pieces = []
 
-        self.white_legal_moves = self.calculate_standard_legal_moves(self.white_pieces)
-        self.black_legal_moves = self.calculate_standard_legal_moves(self.black_pieces)
+        self.white_legal_moves = []
+        self.black_legal_moves = []
+
+        self.white_player = None
+        self.black_player = None
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
         return len(self.board)
@@ -52,6 +56,17 @@ class BoardModel(QAbstractListModel):
 
     def get_piece(self, index):
         return self.board[index]
+
+    def set_up(self):
+        self.board = self.standard_board()
+        self.white_pieces = self.active_pieces(Alliance.White)
+        self.black_pieces = self.active_pieces(Alliance.Black)
+
+        self.white_legal_moves = self.calculate_standard_legal_moves(self.white_pieces)
+        self.black_legal_moves = self.calculate_standard_legal_moves(self.black_pieces)
+
+        self.white_player = WhitePlayer(self, self.white_legal_moves, self.black_legal_moves)
+        self.black_player = BlackPlayer(self, self.black_legal_moves, self.white_legal_moves)
 
     def calculate_standard_legal_moves(self, pieces):
         legal_moves = []
@@ -96,5 +111,5 @@ class BoardModel(QAbstractListModel):
 
 
 b = BoardModel()
-print(b.black_legal_moves)
-
+b.set_up()
+print(b.get_piece(1).legal_moves)
