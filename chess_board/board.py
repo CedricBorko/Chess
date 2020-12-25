@@ -11,15 +11,20 @@ from pieces.queen import Queen
 from pieces.rook import Rook
 
 
-class Board(QAbstractListModel):
+class BoardModel(QAbstractListModel):
 
     def __init__(self):
         super().__init__()
 
-        self.__pieces = self.standard_board()
+        self.board = self.standard_board()
+        self.white_pieces = self.active_pieces(Alliance.White)
+        self.black_pieces = self.active_pieces(Alliance.Black)
+
+        self.white_legal_moves = self.calculate_standard_legal_moves(self.white_pieces)
+        self.black_legal_moves = self.calculate_standard_legal_moves(self.black_pieces)
 
     def rowCount(self, parent: QModelIndex = ...) -> int:
-        return len(self.__pieces)
+        return len(self.board)
 
     def flags(self, index: QModelIndex):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
@@ -28,45 +33,68 @@ class Board(QAbstractListModel):
 
         if role == Qt.DisplayRole:
             row = index.row()
-            return self.__pieces[row]
+            return self.board[row]
 
         if role == Qt.ToolTipRole:
             row = index.row()
-            return self.__pieces[row]
+            return self.board[row]
 
     def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
 
         row = index.row()
 
         if value:
-            self.__pieces[row] = value
+            self.board[row] = value
             self.dataChanged(index, index)
             return True
 
         return False
 
     def get_piece(self, index):
-        return self.__pieces[index]
+        return self.board[index]
 
-    def get_board(self):
-        return self.__pieces
+    def calculate_standard_legal_moves(self, pieces):
+        legal_moves = []
+        for p in pieces:
+            p.calculate_legal_moves(self)
+            moves = p.legal_moves
+            legal_moves.append(moves)
+        return legal_moves
+
+    def active_pieces(self, alliance):
+        pieces = set()
+        for p in self.board:
+            if p is not None:
+                if p.alliance == alliance:
+                    pieces.add(p)
+        return pieces
 
     @staticmethod
     def standard_board():
-        row_1 = [Rook(0, Alliance.Black), Knight(1, Alliance.Black), Bishop(2, Alliance.Black),
-                 Queen(3, Alliance.Black), King(4, Alliance.Black), Bishop(5, Alliance.Black),
-                 Knight(6, Alliance.Black), Rook(7, Alliance.Black)]
-        row_2 = [Pawn(i, Alliance.Black) for i in range(8, 16)]
-        rows_3_to_6 = [None for _ in range(32)]
-        row_7 = [Pawn(i, Alliance.White) for i in range(48, 56)]
-        row_8 = [Rook(56, Alliance.White), Knight(57, Alliance.White), Bishop(58, Alliance.White),
-                 Queen(59, Alliance.White), King(60, Alliance.White), Bishop(61, Alliance.White),
-                 Knight(62, Alliance.White), Rook(63, Alliance.White)]
-        return row_1 + row_2 + rows_3_to_6 + row_7 + row_8
+        black = [Rook(0, Alliance.Black),
+                 Knight(1, Alliance.Black),
+                 Bishop(2, Alliance.Black),
+                 Queen(3, Alliance.Black),
+                 King(4, Alliance.Black),
+                 Bishop(5, Alliance.Black),
+                 Knight(6, Alliance.Black),
+                 Rook(7, Alliance.Black)]
+        black_pawns = [Pawn(i, Alliance.Black) for i in range(8, 16)]
+
+        empty = [None for _ in range(32)]
+
+        white_pawns = [Pawn(i, Alliance.White) for i in range(48, 56)]
+        white = [Rook(56, Alliance.White),
+                 Knight(57, Alliance.White),
+                 Bishop(58, Alliance.White),
+                 Queen(59, Alliance.White),
+                 King(60, Alliance.White),
+                 Bishop(61, Alliance.White),
+                 Knight(62, Alliance.White),
+                 Rook(63, Alliance.White)]
+        return black + black_pawns + empty + white_pawns + white
 
 
-b = Board()
-for piece in b.get_board():
-    if piece is not None:
-        piece.calculate_legal_moves(b)
-        print(piece.position, piece.Name, piece.legal_moves)
+b = BoardModel()
+print(b.black_legal_moves)
+

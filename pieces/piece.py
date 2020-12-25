@@ -14,7 +14,7 @@ class Piece:
         self.legal_moves = set()
 
     def __repr__(self):
-        return "This is a {} of alliance {} on position {}".format(type(self), self.alliance, self.position)
+        return "{} {}".format(self.alliance, self.Name)
 
     def __str__(self):
         return self.Name
