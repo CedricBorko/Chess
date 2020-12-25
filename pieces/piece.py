@@ -1,14 +1,23 @@
+from enum import Enum
+
+from pieces.alliance import Alliance
+
+
 class Piece:
+
+    Name = ""
 
     def __init__(self, position, alliance):
         self.position = position
-        self.__alliance = alliance
+        self.alliance = alliance
+
+        self.legal_moves = set()
 
     def __repr__(self):
-        return "This is a {} of alliance {} on position {}".format(self, self.__alliance, self.position)
+        return "This is a {} of alliance {} on position {}".format(type(self), self.alliance, self.position)
 
-    def get_alliance(self):
-        return self.__alliance
+    def __str__(self):
+        return self.Name
 
     def move(self, target_position):
         if self.valid_target(target_position):
@@ -17,5 +26,12 @@ class Piece:
     def valid_target(self, target_position):
         pass
 
+    def calculate_legal_moves(self, board):
+        pass
 
+    def is_black(self):
+        return self.alliance == Alliance.Black
+
+    def is_white(self):
+        return self.alliance == Alliance.White
 

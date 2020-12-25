@@ -1,9 +1,5 @@
-from PyQt5.QtCore import QModelIndex
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 
-from chess_board.board import Board
-from pieces.piece import Piece
-from pieces.player import Player
 from resolutions import monitor_size
 
 
@@ -12,6 +8,8 @@ class Window(QMainWindow):
         super(Window, self).__init__()
 
         self.w_partial, self.h_partial = monitor_size()
+
+        self.setStyleSheet("background: white")
 
         # Init Window
         self.setWindowTitle("Chess")
@@ -25,7 +23,7 @@ class MainWindow(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.main_layout = QHBoxLayout(self)
-        self.board = Board(self, [Piece((0, 0), Player.White)])
+        self.main_layout = QGridLayout(self)
+
 
 
