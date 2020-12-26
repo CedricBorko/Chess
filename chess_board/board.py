@@ -1,6 +1,6 @@
 import typing
 
-from PyQt5.QtCore import QModelIndex, Qt, QAbstractListModel
+from PyQt5.QtCore import QModelIndex, Qt
 
 from pieces.bishop import Bishop
 from pieces.king import King
@@ -12,7 +12,7 @@ from pieces.rook import Rook
 from player.player import BlackPlayer, WhitePlayer
 
 
-class BoardModel(QAbstractListModel):
+class Board:
 
     def __init__(self):
         super().__init__()
@@ -27,35 +27,14 @@ class BoardModel(QAbstractListModel):
         self.white_player = None
         self.black_player = None
 
-    def rowCount(self, parent: QModelIndex = ...) -> int:
-        return len(self.board)
-
-    def flags(self, index: QModelIndex):
-        return Qt.ItemIsEnabled | Qt.ItemIsSelectable | Qt.ItemIsEditable
-
-    def data(self, index: QModelIndex, role: int = ...):
-
-        if role == Qt.DisplayRole:
-            row = index.row()
-            return self.board[row]
-
-        if role == Qt.ToolTipRole:
-            row = index.row()
-            return self.board[row]
-
-    def setData(self, index: QModelIndex, value: typing.Any, role: int = ...) -> bool:
-
-        row = index.row()
-
-        if value:
-            self.board[row] = value
-            self.dataChanged(index, index)
-            return True
-
-        return False
+        self.current_player = None
 
     def get_piece(self, index):
         return self.board[index]
+
+    def set_piece(self, old, new, piece):
+        self.board[new] = piece
+        self.board[old] = None
 
     def set_up(self):
         self.board = self.standard_board()
@@ -65,8 +44,10 @@ class BoardModel(QAbstractListModel):
         self.white_legal_moves = self.calculate_standard_legal_moves(self.white_pieces)
         self.black_legal_moves = self.calculate_standard_legal_moves(self.black_pieces)
 
-        self.white_player = WhitePlayer(self, self.white_legal_moves, self.black_legal_moves)
-        self.black_player = BlackPlayer(self, self.black_legal_moves, self.white_legal_moves)
+        self.white_player = WhitePlayer(self, self.white_legal_moves)
+        self.black_player = BlackPlayer(self, self.black_legal_moves)
+
+        self.current_player = self.white_player
 
     def calculate_standard_legal_moves(self, pieces):
         legal_moves = []
@@ -83,6 +64,23 @@ class BoardModel(QAbstractListModel):
                 if p.alliance == alliance:
                     pieces.add(p)
         return pieces
+
+    def is_tile_empty(self, pos):
+        return self.board[pos] is None
+
+    def is_valid(self):
+        return not self.current_player.is_check(self)
+
+    def update(self):
+        for piece in self.board:
+            if piece is not None:
+                piece.calculate_legal_moves(self)
+
+    def next_player(self):
+        if self.current_player == self.white_player:
+            self.current_player = self.black_player
+        else:
+            self.current_player = self.white_player
 
     @staticmethod
     def standard_board():
@@ -102,14 +100,10 @@ class BoardModel(QAbstractListModel):
         white = [Rook(56, Alliance.White),
                  Knight(57, Alliance.White),
                  Bishop(58, Alliance.White),
-                 Queen(59, Alliance.White),
-                 King(60, Alliance.White),
+                 King(59, Alliance.White),
+                 Queen(60, Alliance.White),
                  Bishop(61, Alliance.White),
                  Knight(62, Alliance.White),
                  Rook(63, Alliance.White)]
         return black + black_pawns + empty + white_pawns + white
-
-
-b = BoardModel()
-b.set_up()
-print(b.get_piece(1).legal_moves)
+        # return black + empty + white

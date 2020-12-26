@@ -10,6 +10,7 @@ class King(Piece):
         super().__init__(position, alliance)
 
     def calculate_legal_moves(self, board):
+        self.legal_moves = []
         offsets = {-9, -8, -7, -1, 1, 7, 8, 9}
 
         for offset in offsets:
@@ -21,11 +22,11 @@ class King(Piece):
 
                     piece_on_tile = board.get_piece(possible_target)
                     if piece_on_tile is None:
-                        self.legal_moves.add(Move(board, self, possible_target))
+                        self.legal_moves.append(Move(board, self, possible_target))
 
                     else:
                         if piece_on_tile.alliance != self.alliance:
-                            self.legal_moves.add(AttackMove(board, self, possible_target, piece_on_tile))
+                            self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
 
     def first_column(self, offset):
         return self.position % 8 == 0 and offset in (-9, -1, 7)

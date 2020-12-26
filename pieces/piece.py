@@ -11,7 +11,7 @@ class Piece:
         self.position = position
         self.alliance = alliance
 
-        self.legal_moves = set()
+        self.legal_moves = []
 
     def __repr__(self):
         return "{} {}".format(self.alliance, self.Name)
@@ -35,3 +35,15 @@ class Piece:
     def is_white(self):
         return self.alliance == Alliance.White
 
+    @property
+    def x(self):
+        return self.position % 8
+
+    @property
+    def y(self):
+        return self.position // 8
+
+    def get_move(self, destination):
+        for move in self.legal_moves:
+            if move.destination == destination:
+                return move

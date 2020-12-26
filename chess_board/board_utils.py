@@ -5,4 +5,3 @@ def valid_target(target):
 def on_row(row, position):
     return position // 8 == row - 1
 
-
