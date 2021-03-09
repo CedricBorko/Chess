@@ -1,11 +1,9 @@
-from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtGui import QPainter
-from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
+from PySide6.QtCore import Qt, QRect
+from PySide6.QtGui import QPainter
+from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout
 
 from chess_board.board import Board
-from pieces.alliance import Alliance
-from pieces.rook import Rook
+from pieces.piece import EmptyPiece
 from resolutions import monitor_size
 
 
@@ -30,19 +28,23 @@ class MainWindow(QWidget):
         super().__init__(parent)
 
         self.main_layout = QGridLayout(self)
-        self.b = Board()
-        self.b.set_up()
-        self.tile_size = 50
-        self.selected_piece = None
+        self.board = Board()
+        self.board.setup()
+        for i in range(1, 9):
+            for letter in "abcdefgh":
+                piece = self.board.letter_code(letter, i)
+                if not isinstance(piece, EmptyPiece):
+                    piece.calculate_legal_moves(self.board)
+                    print(self.board.letter_code(letter, i).legal_moves)
 
-    def paintEvent(self, QPaintEvent):
+    """def paintEvent(self, QPaintEvent):
         qp = QPainter(self)
 
-        if self.selected_piece is not None and self.selected_piece in self.b.current_player.get_active_pieces():
-            qp.fillRect(QRect(self.selected_piece.x * self.tile_size, self.selected_piece.y * self.tile_size,
+        if self.selected_piece is not None:
+            qp.fillRect(QRect(self.selected_piece.col * self.tile_size, self.selected_piece.row * self.tile_size,
                               self.tile_size, self.tile_size), Qt.yellow)
             for move in self.selected_piece.legal_moves:
-                qp.fillRect(QRect(move.x * self.tile_size, move.y * self.tile_size,
+                qp.fillRect(QRect(move.col * self.tile_size, move.row * self.tile_size,
                                   self.tile_size, self.tile_size), Qt.lightGray)
 
         for i in range(len(self.b.board)):
@@ -62,11 +64,18 @@ class MainWindow(QWidget):
             if 0 <= x < 8 and 0 <= y < 8:
                 if self.selected_piece is not None:
                     selected_move = self.selected_piece.get_move(index)
-                    if selected_move is not None and self.selected_piece in self.b.current_player.get_active_pieces():
-                        if selected_move.move():
-                            self.update()
-                            # print(self.b.board[index].legal_moves)
-                            self.selected_piece = None
-                            return
+                    if selected_move is not None:
+                        temp_board = selected_move.execute()
+                        if temp_board.is_valid():
+                            self.b = temp_board
+                            self.b.update()
+                            print(self.b.current_player)
+                        else:
+                            temp_board = selected_move.undo()
+                            self.selected_piece.legal_moves.remove(selected_move)
+
+                        self.selected_piece = None
+                        self.update()
+                        return
                 self.selected_piece = self.b.get_piece(index)
-                self.update()
+                self.update()"""

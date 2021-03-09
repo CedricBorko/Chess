@@ -1,10 +1,10 @@
-from chess_board.board_utils import valid_target
+from chess_board.utils import valid_target
 from chess_board.move import AttackMove, Move
-from pieces.piece import Piece
+from pieces.piece import Piece, EmptyPiece
 
 
 class Knight(Piece):
-    Name = "Knight"
+    ABBREVIATION = "N"
 
     def __init__(self, position, alliance):
         super().__init__(position, alliance)
@@ -22,12 +22,16 @@ class Knight(Piece):
                     and not self.seventh_column(offset) and not self.eighth_column(offset):
 
                     piece_on_tile = board.get_piece(possible_target)
-                    if piece_on_tile is None:
+                    if isinstance(piece_on_tile, EmptyPiece):
                         self.legal_moves.append(Move(board, self, possible_target, ))
 
                     else:
                         if piece_on_tile.alliance != self.alliance:
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
+
+    @staticmethod
+    def make_move(move):
+        return Knight(move.destination, move.moving_piece.alliance)
 
     def first_column(self, offset):
         return self.position % 8 == 0 and offset in (-17, -10, 6, 15)

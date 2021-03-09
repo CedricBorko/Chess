@@ -1,10 +1,10 @@
-from chess_board.board_utils import valid_target
 from chess_board.move import Move, AttackMove
+from chess_board.utils import valid_target
 from pieces.piece import Piece
 
 
 class Bishop(Piece):
-    Name = "Bishop"
+    ABBREVIATION = "B"
 
     def __init__(self, position, alliance):
         super().__init__(position, alliance)
@@ -34,6 +34,10 @@ class Bishop(Piece):
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
                         else:
                             break
+
+    @staticmethod
+    def make_move(move):
+        return Bishop(move.destination, move.moving_piece.alliance)
 
     @staticmethod
     def first_column(current_pos, offset):

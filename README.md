@@ -1,3 +1,3 @@
 # Chess
 
-New try of an implementation of chess in python using pyqt5
+New try of an implementation of chess in python using PySide6

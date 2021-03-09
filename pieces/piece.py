@@ -1,33 +1,25 @@
-from enum import Enum
-
 from pieces.alliance import Alliance
+from chess_board.utils import letter_code
 
 
 class Piece:
-
-    Name = ""
+    ABBREVIATION = "P"
 
     def __init__(self, position, alliance):
+        self.NAME = self.__class__.__name__
         self.position = position
         self.alliance = alliance
 
         self.legal_moves = []
 
     def __repr__(self):
-        return "{} {}".format(self.alliance, self.Name)
+        return "{} {}".format(self.alliance, self.NAME)
 
     def __str__(self):
-        return self.Name
+        return self.ABBREVIATION
 
-    def move(self, target_position):
-        if self.valid_target(target_position):
-            self.position = target_position
-
-    def valid_target(self, target_position):
-        pass
-
-    def calculate_legal_moves(self, board):
-        pass
+    def show(self):
+        return f"{self.NAME} {self.alliance} {letter_code(self.position)}"
 
     def is_black(self):
         return self.alliance == Alliance.Black
@@ -36,14 +28,24 @@ class Piece:
         return self.alliance == Alliance.White
 
     @property
-    def x(self):
+    def col(self):
         return self.position % 8
 
     @property
-    def y(self):
+    def row(self):
         return self.position // 8
+
+    def __eq__(self, other):
+        return self.position == other.position and self.alliance == other.alliance
 
     def get_move(self, destination):
         for move in self.legal_moves:
             if move.destination == destination:
                 return move
+
+
+class EmptyPiece(Piece):
+    ABBREVIATION = "E"
+
+    def __init__(self, position, alliance=None):
+        super().__init__(position, alliance)

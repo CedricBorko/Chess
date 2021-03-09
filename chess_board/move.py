@@ -1,52 +1,27 @@
-import copy
-
+from chess_board.utils import letter_code
 
 class Move:
-    def __init__(self, board, piece, destination):
+    def __init__(self, board, piece, target):
         self.board = board
         self.piece = piece
-        self.destination = destination
+        self.target = target
+
+    def __str__(self):
+        return f"(M: {self.piece.show()} -> {letter_code(self.target)})"
 
     def __repr__(self):
-        return "Destination {}".format(self.destination)
-
-    @property
-    def x(self):
-        return self.destination % 8
-
-    @property
-    def y(self):
-        return self.destination // 8
-
-    def move(self):
-        copied_board = copy.deepcopy(self.board)
-        copied_board.set_piece(self.piece.position, self.destination, self.piece)
-        copied_board.update()
-        if copied_board.is_valid():
-            old = self.piece.position
-            self.piece.position = self.destination
-            self.board.set_piece(old, self.destination, self.piece)
-            self.board.update()
-            self.board.next_player()
-            return True
-        else:
-            return False
+        return f"(M: {self.piece.show()} -> {letter_code(self.target)})"
 
 
-class AttackMove(Move):
-    def __init__(self, board, piece, destination, attacked_piece):
-        super().__init__(board, piece, destination)
-
+class AttackMove:
+    def __init__(self, board, piece, target, attacked_piece):
+        self.board = board
+        self.piece = piece
+        self.target = target
         self.attacked_piece = attacked_piece
 
     def __repr__(self):
-        return "{} on {} is attacking {} at {}".format(self.piece, self.piece.position,
-                                                       self.attacked_piece, self.destination)
+        return f"(AM: {self.piece.show()} -> {self.attacked_piece.show()})"
 
-    def move(self):
-        pass
-
-
-class PawnMove(Move):
-    def __init__(self, board, piece, destination):
-        super().__init__(board, piece, destination)
+    def __str__(self):
+        return f"(AM: {self.piece.show()} -> {self.attacked_piece.show()})"

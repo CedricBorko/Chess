@@ -1,10 +1,10 @@
-from chess_board.board_utils import valid_target
+from chess_board.utils import valid_target
 from chess_board.move import AttackMove, Move
 from pieces.piece import Piece
 
 
 class King(Piece):
-    Name = "King"
+    ABBREVIATION = "K"
 
     def __init__(self, position, alliance):
         super().__init__(position, alliance)
@@ -27,6 +27,10 @@ class King(Piece):
                     else:
                         if piece_on_tile.alliance != self.alliance:
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
+
+    @staticmethod
+    def make_move(move):
+        return King(move.destination, move.moving_piece.alliance)
 
     def first_column(self, offset):
         return self.position % 8 == 0 and offset in (-9, -1, 7)
