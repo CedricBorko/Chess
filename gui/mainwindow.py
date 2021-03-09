@@ -119,11 +119,6 @@ class MainWindow(QWidget):
 
                         self.update()
             else:
-                piece = self.board.get_piece(pos)
-                if not isinstance(piece, EmptyPiece):
-                    self.selected_piece = piece
-                    self.update()
-
                 move = self.selected_piece.get_move(pos)
                 if move is not None and self.board.current_player.alliance == self.selected_piece.alliance:
                     self.selected_piece.make_move(self.board, move)
@@ -131,3 +126,8 @@ class MainWindow(QWidget):
                     self.board.current_player.next_player()
                     self.board.calculate_legal_moves()
                     self.update()
+                else:
+                    piece = self.board.get_piece(pos)
+                    if not isinstance(piece, EmptyPiece):
+                        self.selected_piece = piece
+                        self.update()
