@@ -20,7 +20,7 @@ class King(Piece):
 
             possible_target = self.position + offset
 
-            if self.first_move and self.position == 4:
+            if self.first_move:
                 if offset == 1:
                     free_way = True
                     for i in range(1, 2):
@@ -45,7 +45,7 @@ class King(Piece):
                         possible_rook = board.get_piece(possible_target - 3)
                         if isinstance(possible_rook, Rook):
                             if possible_rook.first_move and possible_rook.alliance == self.alliance:
-                                self.legal_moves.append(CastleMove(board, self, possible_rook.position, False))
+                                self.legal_moves.append(CastleMove(board, self, possible_rook.position + 1, False))
 
 
 

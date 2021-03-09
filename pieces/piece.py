@@ -52,11 +52,11 @@ class Piece:
                 new_king = King(move.target, self.alliance)
                 new_rook = Rook(new_king.position - 1, self.alliance)
             else:
-                new_king = King(move.target + 1, self.alliance)
+                new_king = King(move.target, self.alliance)
                 new_rook = Rook(new_king.position + 1, self.alliance)
 
             board.current_player.king = new_king
-            board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target))
+            board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target - 1))
             board.set_piece(new_king.position, new_king, EmptyPiece(self.position))
 
         else:

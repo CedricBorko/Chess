@@ -7,7 +7,7 @@ from gui.mainwindow import Window
 def main():
     app = QApplication(sys.argv)
     screen = Window()
-    #screen.show()
+    screen.show()
     sys.exit((app.exec_()))
 
 
