@@ -9,6 +9,8 @@ class Rook(Piece):
     def __init__(self, position, alliance):
         super().__init__(position, alliance)
 
+        self.first_move = True
+
     def calculate_legal_moves(self, board):
         self.legal_moves = []
         offsets = {-8, -1, 1, 8}
@@ -28,16 +30,10 @@ class Rook(Piece):
                     piece_on_tile = board.get_piece(possible_target)
                     if isinstance(piece_on_tile, EmptyPiece):
                         self.legal_moves.append(Move(board, self, possible_target))
-
                     else:
                         if piece_on_tile.alliance != self.alliance:
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
-                        else:
-                            break
-
-    @staticmethod
-    def make_move(move):
-        return Rook(move.destination, move.moving_piece.alliance)
+                        break
 
     @staticmethod
     def first_column(current_pos, offset):

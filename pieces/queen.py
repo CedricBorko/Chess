@@ -1,6 +1,6 @@
 from chess_board.utils import valid_target
 from chess_board.move import AttackMove, Move
-from pieces.piece import Piece
+from pieces.piece import Piece, EmptyPiece
 
 
 class Queen(Piece):
@@ -25,18 +25,13 @@ class Queen(Piece):
                 if valid_target(possible_target):
 
                     piece_on_tile = board.get_piece(possible_target)
-                    if piece_on_tile is None:
+                    if isinstance(piece_on_tile, EmptyPiece):
                         self.legal_moves.append(Move(board, self, possible_target))
 
                     else:
                         if piece_on_tile.alliance != self.alliance:
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
-                        else:
-                            break
-
-    @staticmethod
-    def make_move(move):
-        return Queen(move.destination, move.moving_piece.alliance)
+                        break
 
     @staticmethod
     def first_column(current_pos, offset):

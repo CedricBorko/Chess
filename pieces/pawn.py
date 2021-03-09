@@ -50,7 +50,3 @@ class Pawn(Piece):
                     if not isinstance(piece, EmptyPiece):
                         if self.alliance != piece.alliance:
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece))
-
-    @staticmethod
-    def make_move(move):
-        return Pawn(move.destination, move.moving_piece.alliance)

@@ -1,5 +1,6 @@
 import string
 
+from chess_board.move import AttackMove
 from pieces.bishop import Bishop
 from pieces.king import King
 from pieces.knight import Knight
@@ -18,7 +19,7 @@ class Board:
         self.white_player = WhitePlayer(self, Alliance.White)
         self.black_player = BlackPlayer(self, Alliance.Black)
 
-        self.current_player = self.white_player
+        self.current_player = self.black_player
         self.setup()
         self.calculate_legal_moves()
 
@@ -39,8 +40,12 @@ class Board:
         return self.pieces[index]
 
     def create_standard_board(self):
-        self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
-                       Bishop(2, Alliance.Black), Queen(3, Alliance.White),
+        self.pieces = [EmptyPiece(i) for i in range(64)]
+        self.set_piece(4, King(4, Alliance.Black), EmptyPiece(4))
+        self.set_piece(7, Rook(7, Alliance.Black), EmptyPiece(7))
+        self.set_piece(56, King(56, Alliance.White), EmptyPiece(56))
+        """"self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
+                       Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
                        Knight(6, Alliance.Black), Rook(7, Alliance.Black)]
 
@@ -51,9 +56,9 @@ class Board:
         self.pieces += [Pawn(i, Alliance.White) for i in range(48, 56)]
 
         self.pieces += [Rook(56, Alliance.White), Knight(57, Alliance.White),
-                        Bishop(58, Alliance.White), Queen(59, Alliance.Black),
+                        Bishop(58, Alliance.White), Queen(59, Alliance.White),
                         King(60, Alliance.White), Bishop(61, Alliance.White),
-                        Knight(62, Alliance.White), Rook(63, Alliance.White)]
+                        Knight(62, Alliance.White), Rook(63, Alliance.White)]"""
 
     def __str__(self):
         output = ' '.join([self.get_piece(i).__str__() for i in range(0, 8)]) + " 8" + "\n"
@@ -69,8 +74,9 @@ class Board:
 
     def letter_code(self, letter, number):
         x = string.ascii_lowercase.index(letter)
-        y = number - 1
-        return self.pieces[y * 8 + x]
+        y = 8 - number
+        return self.get_piece(y * 8 + x)
 
-    def set_piece(self, index, piece):
-        self.pieces[index] = piece
+    def set_piece(self, target, new_piece, old_piece):
+        self.pieces[old_piece.position] = EmptyPiece(old_piece.position)
+        self.pieces[target] = new_piece

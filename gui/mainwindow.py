@@ -1,8 +1,11 @@
+import copy
+
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout
 
 from chess_board.board import Board
+from chess_board.utils import letter_code_to_number
 from pieces.piece import EmptyPiece
 from resolutions import monitor_size
 
@@ -29,5 +32,46 @@ class MainWindow(QWidget):
 
         self.main_layout = QGridLayout(self)
         self.board = Board()
-        print(self.board.white_player.is_check())
 
+        while True:
+            if self.board.current_player.is_checkmate():
+                print(self.board.current_player.opponent().__class__.__name__, "wins!")
+                break
+
+            if self.board.current_player.is_stalemate():
+                print("Tie!")
+                break
+            mover = input("> ")
+            letter, number = mover[0], int(mover[1])
+            piece = self.board.letter_code(letter, number)
+            self.board.calculate_legal_moves()
+
+            if piece.alliance != self.board.current_player.alliance:
+                continue
+            if len(piece.legal_moves) == 0:
+                continue
+            if isinstance(piece, EmptyPiece):
+                continue
+
+            updated_legal_moves = []
+            copied_board = copy.deepcopy(self.board)
+            for move in piece.legal_moves:
+                piece.make_move(copied_board, move)
+                if not copied_board.current_player.is_check(copied_board):
+                    updated_legal_moves.append(move)
+                copied_board = copy.deepcopy(self.board)
+
+            piece.legal_moves = updated_legal_moves
+            print(piece.legal_moves)
+            if len(piece.legal_moves) == 0:
+                continue
+
+            move = input("> ")
+            letter, number = move[0], int(move[1])
+            target = letter_code_to_number(letter, number)
+
+            move = piece.get_move(target)
+            piece.make_move(self.board, move)
+            self.board.current_player.next_player()
+            print("-" * 50)
+            print(self.board)

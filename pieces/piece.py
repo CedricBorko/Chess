@@ -1,5 +1,6 @@
+from chess_board.move import CastleMove
+from chess_board.utils import pos_to_letter_code
 from pieces.alliance import Alliance
-from chess_board.utils import letter_code
 
 
 class Piece:
@@ -16,10 +17,10 @@ class Piece:
         return "{} {}".format(self.alliance, self.NAME)
 
     def __str__(self):
-        return self.ABBREVIATION
+        return self.ABBREVIATION if self.alliance == Alliance.White else self.ABBREVIATION.lower()
 
     def show(self):
-        return f"{self.NAME} {self.alliance} {letter_code(self.position)}"
+        return f"{self.NAME} {self.alliance} {pos_to_letter_code(self.position)}"
 
     def is_black(self):
         return self.alliance == Alliance.Black
@@ -38,14 +39,32 @@ class Piece:
     def __eq__(self, other):
         return self.position == other.position and self.alliance == other.alliance
 
-    def get_move(self, destination):
+    def get_move(self, target):
         for move in self.legal_moves:
-            if move.destination == destination:
+            if move.target == target:
                 return move
+
+    def make_move(self, board, move):
+        from pieces.rook import Rook
+        from pieces.king import King
+        if isinstance(move, CastleMove):
+            if move.king_side:
+                new_king = King(move.target, self.alliance)
+                new_rook = Rook(new_king.position - 1, self.alliance)
+            else:
+                new_king = King(move.target + 1, self.alliance)
+                new_rook = Rook(new_king.position + 1, self.alliance)
+
+            board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target))
+            board.set_piece(new_king.position, new_king, EmptyPiece(self.position))
+
+        else:
+            new_piece = self.__class__(move.target, move.piece.alliance)
+            board.set_piece(move.target, new_piece, self)
 
 
 class EmptyPiece(Piece):
-    ABBREVIATION = "E"
+    ABBREVIATION = "·"
 
     def __init__(self, position, alliance=None):
         super().__init__(position, alliance)

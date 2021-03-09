@@ -29,10 +29,6 @@ class Knight(Piece):
                         if piece_on_tile.alliance != self.alliance:
                             self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
 
-    @staticmethod
-    def make_move(move):
-        return Knight(move.destination, move.moving_piece.alliance)
-
     def first_column(self, offset):
         return self.position % 8 == 0 and offset in (-17, -10, 6, 15)
 
