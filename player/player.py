@@ -5,10 +5,11 @@ from pieces.king import King
 
 
 class Player:
-    def __init__(self, board, alliance, moves=None):
+    def __init__(self, board, alliance, king=None, moves=None):
         self.board = board
         self.alliance = alliance
         self.moves = moves or []
+        self.king = king
 
     def next_player(self):
         self.board.current_player = self.opponent()

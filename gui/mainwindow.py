@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout
 
 from chess_board.board import Board
 from chess_board.utils import letter_code_to_number
+from pieces.king import King
 from pieces.piece import EmptyPiece
 from resolutions import monitor_size
 
@@ -53,6 +54,7 @@ class MainWindow(QWidget):
             if isinstance(piece, EmptyPiece):
                 continue
 
+            print(piece.position, self.board.black_player.king.position)
             updated_legal_moves = []
             copied_board = copy.deepcopy(self.board)
             for move in piece.legal_moves:
@@ -62,7 +64,7 @@ class MainWindow(QWidget):
                 copied_board = copy.deepcopy(self.board)
 
             piece.legal_moves = updated_legal_moves
-            print(piece.legal_moves)
+
             if len(piece.legal_moves) == 0:
                 continue
 
@@ -71,7 +73,14 @@ class MainWindow(QWidget):
             target = letter_code_to_number(letter, number)
 
             move = piece.get_move(target)
-            piece.make_move(self.board, move)
+            try:
+                piece.make_move(self.board, move)
+            except AttributeError:
+                continue
+
+            if isinstance(piece, King):
+                self.board.current_player.king.first_move = False
+
             self.board.current_player.next_player()
             print("-" * 50)
             print(self.board)

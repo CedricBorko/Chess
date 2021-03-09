@@ -43,8 +43,11 @@ class Board:
         self.pieces = [EmptyPiece(i) for i in range(64)]
         self.set_piece(4, King(4, Alliance.Black), EmptyPiece(4))
         self.set_piece(7, Rook(7, Alliance.Black), EmptyPiece(7))
+        self.set_piece(0, Rook(0, Alliance.Black), EmptyPiece(0))
         self.set_piece(56, King(56, Alliance.White), EmptyPiece(56))
-        """"self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
+        self.white_player.king = self.get_piece(56)
+        self.black_player.king = self.get_piece(4)
+        """self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
                        Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
                        Knight(6, Alliance.Black), Rook(7, Alliance.Black)]

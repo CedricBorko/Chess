@@ -55,12 +55,16 @@ class Piece:
                 new_king = King(move.target + 1, self.alliance)
                 new_rook = Rook(new_king.position + 1, self.alliance)
 
+            board.current_player.king = new_king
             board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target))
             board.set_piece(new_king.position, new_king, EmptyPiece(self.position))
 
         else:
             new_piece = self.__class__(move.target, move.piece.alliance)
             board.set_piece(move.target, new_piece, self)
+
+            if isinstance(new_piece, King):
+                board.current_player.king = new_piece
 
 
 class EmptyPiece(Piece):
