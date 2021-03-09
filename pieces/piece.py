@@ -3,7 +3,7 @@ from chess_board.utils import letter_code
 
 
 class Piece:
-    ABBREVIATION = "P"
+    ABBREVIATION = ""
 
     def __init__(self, position, alliance):
         self.NAME = self.__class__.__name__
@@ -49,3 +49,7 @@ class EmptyPiece(Piece):
 
     def __init__(self, position, alliance=None):
         super().__init__(position, alliance)
+
+    @staticmethod
+    def calculate_legal_moves(board):
+        return []

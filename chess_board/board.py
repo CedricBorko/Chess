@@ -15,21 +15,32 @@ class Board:
         super().__init__()
 
         self.pieces = [EmptyPiece(i) for i in range(64)]
-        self.white_player = WhitePlayer(self)
-        self.black_player = BlackPlayer(self)
+        self.white_player = WhitePlayer(self, Alliance.White)
+        self.black_player = BlackPlayer(self, Alliance.Black)
 
         self.current_player = self.white_player
+        self.setup()
+        self.calculate_legal_moves()
 
     def setup(self):
         self.create_standard_board()
         print(self)
+
+    def calculate_legal_moves(self):
+        for i in range(64):
+            piece = self.pieces[i]
+            if not isinstance(piece, EmptyPiece):
+                self.pieces[i].calculate_legal_moves(self)
+
+    def get_alliance_pieces(self, alliance):
+        return [piece for piece in self.pieces if piece.alliance == alliance]
 
     def get_piece(self, index):
         return self.pieces[index]
 
     def create_standard_board(self):
         self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
-                       Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
+                       Bishop(2, Alliance.Black), Queen(3, Alliance.White),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
                        Knight(6, Alliance.Black), Rook(7, Alliance.Black)]
 
@@ -40,7 +51,7 @@ class Board:
         self.pieces += [Pawn(i, Alliance.White) for i in range(48, 56)]
 
         self.pieces += [Rook(56, Alliance.White), Knight(57, Alliance.White),
-                        Bishop(58, Alliance.White), Queen(59, Alliance.White),
+                        Bishop(58, Alliance.White), Queen(59, Alliance.Black),
                         King(60, Alliance.White), Bishop(61, Alliance.White),
                         Knight(62, Alliance.White), Rook(63, Alliance.White)]
 
