@@ -40,3 +40,18 @@ class CastleMove:
 
     def __str__(self):
         return f"(CM: {self.king.show()} -> {self.board.get_piece(self.target).show()})"
+
+
+class PromotionMove:
+    def __init__(self, board, pawn, target, other_piece=None):
+        self.board = board
+        self.pawn = pawn
+        self.target = target
+        self.other_piece = other_piece
+        self.promotion_to = None
+
+    def __repr__(self):
+        return f"(PM: {self.pawn.show()} -> {pos_to_letter_code(self.target)})"
+
+    def __str__(self):
+        return f"(PM: {self.pawn.show()} -> {pos_to_letter_code(self.target)})"

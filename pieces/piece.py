@@ -1,4 +1,4 @@
-from chess_board.move import CastleMove
+from chess_board.move import CastleMove, PromotionMove
 from chess_board.utils import pos_to_letter_code
 from pieces.alliance import Alliance
 
@@ -47,6 +47,7 @@ class Piece:
     def make_move(self, board, move):
         from pieces.rook import Rook
         from pieces.king import King
+        from pieces.queen import Queen
         if isinstance(move, CastleMove):
             if move.king_side:
                 new_king = King(move.target, self.alliance)
@@ -58,7 +59,12 @@ class Piece:
             board.current_player.king = new_king
             board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target - 1))
             board.set_piece(new_king.position, new_king, EmptyPiece(self.position))
-
+        elif isinstance(move, PromotionMove):
+            if move.promotion_to is None:
+                move.promotion_to = Queen(move.target, self.alliance)
+            board.set_piece(move.target,
+                            move.promotion_to,
+                            EmptyPiece(move.pawn.position))
         else:
             new_piece = self.__class__(move.target, move.piece.alliance)
             board.set_piece(move.target, new_piece, self)

@@ -18,7 +18,7 @@ class Player:
         pass
 
     def active_pieces(self, board):
-        pass
+        return board.current_player.active_pieces(board)
 
     def is_check(self, board):
         opponent = self.opponent()
@@ -34,7 +34,6 @@ class Player:
                 if isinstance(move, AttackMove):
                     if isinstance(move.attacked_piece, King):
                         moves_with_king_as_target.append(move)
-
         return len(moves_with_king_as_target) > 0
 
     def is_checkmate(self):
@@ -50,9 +49,9 @@ class Player:
                 copied_board = copy.deepcopy(self.board)
             piece.legal_moves = updated_legal_moves
 
-        opponent_moves = [move for piece in pieces for move in piece.legal_moves]
+        moves = [move for piece in pieces for move in piece.legal_moves]
 
-        return len(opponent_moves) == 0 and self.is_check(self.board)
+        return len(moves) == 0
 
     def is_stalemate(self):
         pieces = self.active_pieces(self.board)
@@ -67,9 +66,15 @@ class Player:
                 copied_board = copy.deepcopy(self.board)
             piece.legal_moves = updated_legal_moves
 
-        opponent_moves = [move for piece in pieces for move in piece.legal_moves]
+        moves = [move for piece in pieces for move in piece.legal_moves]
 
-        return len(opponent_moves) == 0 and not self.is_check(self.board)
+        return len(moves) == 0
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __repr__(self):
+        return self.__class__.__name__
 
 
 class WhitePlayer(Player):

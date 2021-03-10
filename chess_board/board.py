@@ -1,6 +1,6 @@
 import string
 
-from chess_board.move import AttackMove
+from chess_board.move import AttackMove, Move, PromotionMove
 from pieces.bishop import Bishop
 from pieces.king import King
 from pieces.knight import Knight
@@ -40,7 +40,14 @@ class Board:
         return self.pieces[index]
 
     def create_standard_board(self):
-        self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
+        self.pieces = [EmptyPiece(i) for i in range(64)]
+        # self.set_piece(0, Rook(0, Alliance.Black), EmptyPiece(0))
+        self.set_piece(4, King(4, Alliance.Black), EmptyPiece(4))
+        self.set_piece(55, Pawn(55, Alliance.Black), EmptyPiece(55))
+        self.set_piece(8, Pawn(8, Alliance.White), EmptyPiece(8))
+        self.set_piece(60, King(60, Alliance.White), EmptyPiece(60))
+        self.set_piece(63, Rook(63, Alliance.White), EmptyPiece(63))
+        """self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
                        Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
                        Knight(6, Alliance.Black), Rook(7, Alliance.Black)]
@@ -55,6 +62,9 @@ class Board:
                         Bishop(58, Alliance.White), Queen(59, Alliance.White),
                         King(60, Alliance.White), Bishop(61, Alliance.White),
                         Knight(62, Alliance.White), Rook(63, Alliance.White)]
+
+        self.white_player.king = self.get_piece(60)
+        self.black_player.king = self.get_piece(4)"""
 
     def __str__(self):
         output = ' '.join([self.get_piece(i).__str__() for i in range(0, 8)]) + " 8" + "\n"
@@ -76,3 +86,21 @@ class Board:
     def set_piece(self, target, new_piece, old_piece):
         self.pieces[old_piece.position] = EmptyPiece(old_piece.position)
         self.pieces[target] = new_piece
+
+    def undo(self, move):
+        destination = move.target
+        if isinstance(move, AttackMove):
+            moved_piece = move.piece
+            other_piece = move.attacked_piece
+            self.set_piece(moved_piece.position, moved_piece, EmptyPiece(moved_piece.position))
+            self.set_piece(other_piece.position, other_piece, EmptyPiece(other_piece.position))
+        elif isinstance(move, Move):
+            moved_piece = move.piece
+            self.set_piece(moved_piece.position, moved_piece, EmptyPiece(moved_piece.position))
+            self.set_piece(destination, EmptyPiece(destination), EmptyPiece(destination))
+        elif isinstance(move, PromotionMove):
+            if move.other_piece is None:
+                self.set_piece(move.pawn.position, move.pawn, EmptyPiece(move.target))
+            else:
+                self.set_piece(move.pawn.position, move.pawn, EmptyPiece(move.target))
+                self.set_piece(move.target, move.other_piece, EmptyPiece(move.target))

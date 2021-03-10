@@ -20,36 +20,6 @@ class King(Piece):
 
             possible_target = self.position + offset
 
-            if self.first_move:
-                if offset == 1:
-                    free_way = True
-                    for i in range(1, 2):
-                        if not isinstance(board.get_piece(possible_target + i), EmptyPiece):
-                            free_way = False
-                            break
-
-                    if free_way:
-                        possible_rook = board.get_piece(possible_target + 2)
-                        if isinstance(possible_rook, Rook):
-                            if possible_rook.first_move and possible_rook.alliance == self.alliance:
-                                self.legal_moves.append(CastleMove(board, self, possible_rook.position, True))
-
-                elif offset == -1:
-                    free_way = True
-                    for i in range(1, 3):
-                        if not isinstance(board.get_piece(possible_target - i), EmptyPiece):
-                            free_way = False
-                            break
-
-                    if free_way:
-                        possible_rook = board.get_piece(possible_target - 3)
-                        if isinstance(possible_rook, Rook):
-                            if possible_rook.first_move and possible_rook.alliance == self.alliance:
-                                self.legal_moves.append(CastleMove(board, self, possible_rook.position + 1, False))
-
-
-
-
             if valid_target(possible_target):
                 if not self.first_column(offset) and not self.eighth_column(offset):
 
@@ -66,3 +36,29 @@ class King(Piece):
 
     def eighth_column(self, offset):
         return self.position % 8 == 7 and offset in (-7, 1, 9)
+
+
+"""
+            if self.first_move and self.position in (4, 60):
+                if offset == 1:
+                    piece_a = board.get_piece(possible_target)
+                    piece_b = board.get_piece(possible_target + 1)
+                    if isinstance(piece_a, EmptyPiece) and isinstance(piece_b, EmptyPiece):
+                        possible_rook = board.get_piece(possible_target + 2)
+                        if isinstance(possible_rook, Rook):
+                            if possible_rook.first_move and possible_rook.alliance == self.alliance:
+                                self.legal_moves.append(CastleMove(board, self, possible_rook.position, True))
+
+                elif offset == -1:
+                    piece_a = board.get_piece(possible_target)
+                    piece_b = board.get_piece(possible_target - 1)
+                    piece_c = board.get_piece(possible_target - 2)
+
+                    if isinstance(piece_a, EmptyPiece) and \
+                        isinstance(piece_b, EmptyPiece) and \
+                        isinstance(piece_c, EmptyPiece):
+                        possible_rook = board.get_piece(possible_target - 3)
+                        if isinstance(possible_rook, Rook):
+                            if possible_rook.first_move and possible_rook.alliance == self.alliance:
+                                self.legal_moves.append(CastleMove(board, self, possible_rook.position + 1, False))
+"""
