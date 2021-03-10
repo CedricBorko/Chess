@@ -5,9 +5,10 @@ from PySide6.QtGui import QPainter, QImage, QFont
 from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton
 
 from chess_board.board import Board
-from chess_board.move import AttackMove, PromotionMove
+from chess_board.move import AttackMove, PromotionMove, CastleMove, EnPassantMove
 from chess_board.utils import valid_target
 from pieces.bishop import Bishop
+from pieces.king import King
 from pieces.knight import Knight
 from pieces.piece import EmptyPiece
 from pieces.queen import Queen
@@ -81,7 +82,7 @@ class MainWindow(QWidget):
             for j in range(8):
                 qp.drawRect(i * 100, j * 100, 100, 100)
 
-        qp.setFont(QFont("Arial", 40))
+        qp.setFont(QFont("Arial", 32))
 
         for l, (letter, number) in enumerate(zip("abcdefgh", "87654321")):
             qp.drawText(QRect(l * 100, 800, 100, 100), Qt.AlignCenter, letter)
@@ -111,8 +112,12 @@ class MainWindow(QWidget):
                                     updated_legal_moves.append(move)
                                 copied_board = copy.deepcopy(self.board)
 
-                            self.selected_piece.legal_moves = updated_legal_moves
+                            if isinstance(self.selected_piece, King):
+                                for m in self.selected_piece.legal_moves:
+                                    if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
+                                        updated_legal_moves.remove(m)
 
+                            self.selected_piece.legal_moves = updated_legal_moves
                             self.update()
                 else:
                     if not isinstance(self.board.get_piece(pos), EmptyPiece):
@@ -124,16 +129,33 @@ class MainWindow(QWidget):
                                 updated_legal_moves.append(move)
                             copied_board = copy.deepcopy(self.board)
 
+                        if isinstance(self.selected_piece, King):
+                            for m in self.selected_piece.legal_moves:
+                                if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
+                                    updated_legal_moves.remove(m)
+
                         self.selected_piece.legal_moves = updated_legal_moves
                         self.update()
 
                     move = self.selected_piece.get_move(pos)
+
                     if move is not None and self.board.current_player.alliance == self.selected_piece.alliance:
                         if isinstance(move, PromotionMove) and not self.promoting:
                             self.promotion_view.setVisible(True)
                             self.promoting = True
                             self.promotion_move = move
+
                         if not self.promoting:
+                            if isinstance(self.selected_piece, King):
+                                self.board.current_player.king_first_move = False
+                            if isinstance(move, EnPassantMove):
+                                self.board.active_en_passant.append(move)
+                            else:
+                                try:
+                                    self.board.active_en_passant.pop()
+                                except IndexError:
+                                    pass
+
                             self.selected_piece.make_move(self.board, move)
                             self.moves_done.append(move)
                             self.moves_label.setText('\n'.join(map(str, self.moves_done)))

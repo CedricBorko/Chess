@@ -6,10 +6,11 @@ from pieces.piece import Piece, EmptyPiece
 class Rook(Piece):
     ABBREVIATION = "R"
 
-    def __init__(self, position, alliance):
+    def __init__(self, position, alliance, original_rook=False):
         super().__init__(position, alliance)
 
         self.first_move = True
+        self.original_rook = original_rook
 
     def calculate_legal_moves(self, board):
         self.legal_moves = []

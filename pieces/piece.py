@@ -1,6 +1,6 @@
-from chess_board.move import CastleMove, PromotionMove
+from chess_board.move import CastleMove, PromotionMove, EnPassantAttackMove, EnPassantMove
 from chess_board.utils import pos_to_letter_code
-from pieces.alliance import Alliance
+from pieces.alliance import Alliance, get_direction
 
 
 class Piece:
@@ -48,6 +48,7 @@ class Piece:
         from pieces.rook import Rook
         from pieces.king import King
         from pieces.queen import Queen
+        from pieces.pawn import Pawn
         if isinstance(move, CastleMove):
             if move.king_side:
                 new_king = King(move.target, self.alliance)
@@ -59,12 +60,20 @@ class Piece:
             board.current_player.king = new_king
             board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target - 1))
             board.set_piece(new_king.position, new_king, EmptyPiece(self.position))
+            t = new_king.position + (1 if move.king_side else - 2)
+            board.set_piece(t, EmptyPiece(t), EmptyPiece(t))
+
         elif isinstance(move, PromotionMove):
             if move.promotion_to is None:
                 move.promotion_to = Queen(move.target, self.alliance)
             board.set_piece(move.target,
                             move.promotion_to,
                             EmptyPiece(move.pawn.position))
+        elif isinstance(move, EnPassantAttackMove):
+            board.set_piece(move.target, Pawn(move.target, move.piece.alliance), EmptyPiece(move.piece.position))
+            board.set_piece(move.attacked_piece.position,
+                            EmptyPiece(move.attacked_piece.position),
+                            move.attacked_piece)
         else:
             new_piece = self.__class__(move.target, move.piece.alliance)
             board.set_piece(move.target, new_piece, self)

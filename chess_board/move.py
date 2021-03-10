@@ -51,7 +51,40 @@ class PromotionMove:
         self.promotion_to = None
 
     def __repr__(self):
-        return f"(PM: {self.pawn.show()} -> {pos_to_letter_code(self.target)})"
+        return f"(PM: {self.pawn.show()} -> {self.promotion_to.show()})"
 
     def __str__(self):
-        return f"(PM: {self.pawn.show()} -> {pos_to_letter_code(self.target)})"
+        return f"(PM: {self.pawn.show()} -> {self.promotion_to.show()})"
+
+
+class EnPassantMove:
+    def __init__(self, board, piece, target, jumped_position):
+        self.board = board
+        self.piece = piece
+        self.target = target
+        self.jumped_position = jumped_position
+
+    def __str__(self):
+        return f"(DM: {self.piece.show()} -> {pos_to_letter_code(self.target)})"
+
+    def __repr__(self):
+        return f"(DM: {self.piece.show()} -> {pos_to_letter_code(self.target)})"
+
+    def __eq__(self, other):
+        return self.target == other.target and self.piece == other.piece
+
+
+class EnPassantAttackMove:
+    def __init__(self, board, piece, target, en_passant_move):
+        self.board = board
+        self.piece = piece
+        self.target = target
+        self.attacked_piece = en_passant_move.piece
+        self.attacked_piece.position = en_passant_move.target
+        self.en_passant_move = en_passant_move
+
+    def __repr__(self):
+        return f"(EM: {self.piece.show()} -> {self.attacked_piece.show()})"
+
+    def __str__(self):
+        return f"(EM: {self.piece.show()} -> {self.attacked_piece.show()})"

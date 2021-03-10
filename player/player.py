@@ -10,6 +10,9 @@ class Player:
         self.alliance = alliance
         self.moves = moves or []
         self.king = king
+        self.king_first_move = True
+        self.rook_q_first_move = True
+        self.rook_k_first_move = True
 
     def next_player(self):
         self.board.current_player = self.opponent()
