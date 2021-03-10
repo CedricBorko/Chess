@@ -96,10 +96,14 @@ class Board:
             other_piece = move.attacked_piece
             self.set_piece(moved_piece.position, moved_piece, EmptyPiece(moved_piece.position))
             self.set_piece(other_piece.position, other_piece, EmptyPiece(other_piece.position))
+            if isinstance(move.piece, King):
+                self.current_player.opponent().king_first_move = True
         elif isinstance(move, Move):
             moved_piece = move.piece
             self.set_piece(moved_piece.position, moved_piece, EmptyPiece(moved_piece.position))
             self.set_piece(destination, EmptyPiece(destination), EmptyPiece(destination))
+            if isinstance(move.piece, King):
+                self.current_player.opponent().king_first_move = True
         elif isinstance(move, PromotionMove):
             if move.other_piece is None:
                 self.set_piece(move.pawn.position, move.pawn, EmptyPiece(move.target))
@@ -109,10 +113,14 @@ class Board:
         elif isinstance(move, CastleMove):
             if move.king_side:
                 self.set_piece(move.king.position, move.king, EmptyPiece(move.target))
-                self.set_piece(move.target + 1, Rook(move.target + 1, move.king.alliance), EmptyPiece(move.target - 1))
+                self.set_piece(move.target + 1,
+                               Rook(move.target + 1, move.king.alliance, original_rook=True),
+                               EmptyPiece(move.target - 1))
             else:
                 self.set_piece(move.king.position, move.king, EmptyPiece(move.target + 1))
-                self.set_piece(move.target - 2, Rook(move.target - 2, move.king.alliance), EmptyPiece(move.target))
+                self.set_piece(move.target - 2,
+                               Rook(move.target - 2, move.king.alliance, original_rook=True),
+                               EmptyPiece(move.target))
             self.current_player.opponent().king_first_move = True
         elif isinstance(move, EnPassantMove):
             moved_piece = move.piece
@@ -126,3 +134,5 @@ class Board:
             self.set_piece(move.piece.position, move.piece, EmptyPiece(move.target))
             self.set_piece(move.attacked_piece.position, move.attacked_piece, EmptyPiece(move.attacked_piece.position))
             self.active_en_passant.append(move.en_passant_move)
+
+
