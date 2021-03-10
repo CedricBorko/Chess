@@ -1,5 +1,4 @@
 import copy
-import time
 
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter, QImage, QFont
@@ -7,9 +6,8 @@ from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLa
 
 from chess_board.board import Board
 from chess_board.move import AttackMove, PromotionMove
-from chess_board.utils import letter_code_to_number, valid_target
+from chess_board.utils import valid_target
 from pieces.bishop import Bishop
-from pieces.king import King
 from pieces.knight import Knight
 from pieces.piece import EmptyPiece
 from pieces.queen import Queen

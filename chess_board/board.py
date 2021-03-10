@@ -40,14 +40,14 @@ class Board:
         return self.pieces[index]
 
     def create_standard_board(self):
-        self.pieces = [EmptyPiece(i) for i in range(64)]
-        # self.set_piece(0, Rook(0, Alliance.Black), EmptyPiece(0))
+        """self.pieces = [EmptyPiece(i) for i in range(64)]
+        self.set_piece(0, Rook(0, Alliance.Black), EmptyPiece(0))
         self.set_piece(4, King(4, Alliance.Black), EmptyPiece(4))
         self.set_piece(55, Pawn(55, Alliance.Black), EmptyPiece(55))
         self.set_piece(8, Pawn(8, Alliance.White), EmptyPiece(8))
         self.set_piece(60, King(60, Alliance.White), EmptyPiece(60))
-        self.set_piece(63, Rook(63, Alliance.White), EmptyPiece(63))
-        """self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
+        self.set_piece(63, Rook(63, Alliance.White), EmptyPiece(63))"""
+        self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
                        Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
                        Knight(6, Alliance.Black), Rook(7, Alliance.Black)]
@@ -64,7 +64,7 @@ class Board:
                         Knight(62, Alliance.White), Rook(63, Alliance.White)]
 
         self.white_player.king = self.get_piece(60)
-        self.black_player.king = self.get_piece(4)"""
+        self.black_player.king = self.get_piece(4)
 
     def __str__(self):
         output = ' '.join([self.get_piece(i).__str__() for i in range(0, 8)]) + " 8" + "\n"
