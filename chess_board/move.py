@@ -36,10 +36,10 @@ class CastleMove:
         self.king_side = king_side
 
     def __repr__(self):
-        return f"(CM: {self.king.show()} -> {self.board.get_piece(self.target).show()})"
+        return f"(CM: {self.king.show()} -> {pos_to_letter_code(self.target)})"
 
     def __str__(self):
-        return f"(CM: {self.king.show()} -> {self.board.get_piece(self.target).show()})"
+        return f"(CM: {self.king.show()} -> {pos_to_letter_code(self.target)})"
 
 
 class PromotionMove:
