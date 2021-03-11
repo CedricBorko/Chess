@@ -150,11 +150,6 @@ class MainWindow(QWidget):
                                 self.board.current_player.king_first_move = False
                             if isinstance(move, EnPassantMove):
                                 self.board.active_en_passant.append(move)
-                            else:
-                                try:
-                                    self.board.active_en_passant.pop()
-                                except IndexError:
-                                    pass
 
                             self.selected_piece.make_move(self.board, move)
                             self.moves_done.append(move)

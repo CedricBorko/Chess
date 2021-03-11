@@ -68,7 +68,6 @@ class Board:
                         King(60, Alliance.White), Bishop(61, Alliance.White),
                         Knight(62, Alliance.White), Rook(63, Alliance.White, original_rook=True)]
 
-
     def __str__(self):
         output = ' '.join([self.get_piece(i).__str__() for i in range(0, 8)]) + " 8" + "\n"
         output += ' '.join([self.get_piece(i).__str__() for i in range(8, 16)]) + " 7" + "\n"
@@ -130,10 +129,11 @@ class Board:
             self.set_piece(move.target - move_back, Pawn(move.target - move_back, move.piece.alliance),
                            EmptyPiece(move.target))
             move.piece.position = move.target - move_back
+            print(self.active_en_passant)
+            self.active_en_passant.remove(move)
+            print(self.active_en_passant)
 
         elif isinstance(move, EnPassantAttackMove):
             self.set_piece(move.piece.position, move.piece, EmptyPiece(move.target))
             self.set_piece(move.attacked_piece.position, move.attacked_piece, EmptyPiece(move.attacked_piece.position))
             self.active_en_passant.append(move.en_passant_move)
-
-

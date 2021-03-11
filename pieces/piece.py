@@ -63,7 +63,6 @@ class Piece:
             t = new_king.position + (1 if move.king_side else - 2)
             board.set_piece(t, EmptyPiece(t), EmptyPiece(t))
 
-
         elif isinstance(move, PromotionMove):
             if move.promotion_to is None:
                 move.promotion_to = Queen(move.target, self.alliance)
@@ -75,6 +74,7 @@ class Piece:
             board.set_piece(move.attacked_piece.position,
                             EmptyPiece(move.attacked_piece.position),
                             move.attacked_piece)
+            board.active_en_passant.remove(move.en_passant_move)
         else:
             new_piece = self.__class__(move.target, move.piece.alliance)
             board.set_piece(move.target, new_piece, self)

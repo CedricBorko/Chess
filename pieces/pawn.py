@@ -36,21 +36,21 @@ class Pawn(Piece):
 
                     position_in_between = self.position + (8 * get_direction(self.alliance))
                     if isinstance(board.get_piece(position_in_between), EmptyPiece) \
-                            and isinstance(piece_on_tile, EmptyPiece):
+                        and isinstance(piece_on_tile, EmptyPiece):
                         self.legal_moves.append(EnPassantMove(board, self, possible_target, position_in_between))
 
                 elif offset == 7 and not (self.position % 8 == 7 and self.is_white() or
                                           self.position % 8 == 0 and self.is_black()):
 
                     piece = board.get_piece(possible_target)
-                    en_passant_moves = [move for move in board.active_en_passant if
-                                        move.jumped_position == possible_target]
+                    try:
+                        en_passant_move = board.active_en_passant[-1]
+                    except IndexError:
+                        en_passant_move = None
                     if isinstance(piece, EmptyPiece):
-                        if len(en_passant_moves) > 0:
-                            en_passant_move = en_passant_moves[0]
-                            print(en_passant_move)
+                        if en_passant_move is not None:
                             if en_passant_move.jumped_position == possible_target \
-                                    and en_passant_move.piece.alliance != self.alliance:
+                                and en_passant_move.piece.alliance != self.alliance:
                                 self.legal_moves.append(EnPassantAttackMove(board,
                                                                             self,
                                                                             possible_target,
@@ -69,13 +69,16 @@ class Pawn(Piece):
                                           self.position % 8 == 7 and self.is_black()):
 
                     piece = board.get_piece(possible_target)
-                    en_passant_moves = [move for move in board.active_en_passant if
-                                        move.jumped_position == possible_target]
+                    try:
+                        en_passant_move = board.active_en_passant[-1]
+                    except IndexError:
+                        en_passant_move = None
+
                     if isinstance(piece, EmptyPiece):
-                        if len(en_passant_moves) > 0:
-                            en_passant_move = en_passant_moves[0]
+                        if en_passant_move is not None:
+
                             if en_passant_move.jumped_position == possible_target \
-                                    and en_passant_move.piece.alliance != self.alliance:
+                                and en_passant_move.piece.alliance != self.alliance:
                                 self.legal_moves.append(EnPassantAttackMove(board,
                                                                             self,
                                                                             possible_target,
