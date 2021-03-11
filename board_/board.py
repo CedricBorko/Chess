@@ -19,14 +19,12 @@ class Board:
         self.pieces = [EmptyPiece(i) for i in range(64)]
         self.white_player = WhitePlayer(self, Alliance.White)
         self.black_player = BlackPlayer(self, Alliance.Black)
+
         self.active_en_passant = []
-
         self.current_player = self.white_player
-        self.setup()
-        self.calculate_legal_moves()
 
-    def setup(self):
         self.create_standard_board()
+        self.calculate_legal_moves()
 
     def calculate_legal_moves(self):
         for i in range(64):
@@ -79,11 +77,6 @@ class Board:
         output += ' '.join([self.get_piece(i).__str__() for i in range(56, 64)]) + " 1" + "\n"
         output += ' '.join("abcdefgh")
         return output
-
-    def letter_code(self, letter, number):
-        x = string.ascii_lowercase.index(letter)
-        y = 8 - number
-        return self.get_piece(y * 8 + x)
 
     def set_piece(self, target, new_piece, old_piece):
         self.pieces[old_piece.position] = EmptyPiece(old_piece.position)

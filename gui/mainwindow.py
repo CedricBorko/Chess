@@ -1,4 +1,6 @@
 import copy
+from concurrent.futures import ProcessPoolExecutor
+from threading import Thread
 
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen
@@ -121,74 +123,48 @@ class MainWindow(QWidget):
             pos = y * 8 + x
 
             if not (self.check_mate or self.stale_mate):
-                if self.selected_piece is None:
-                    if valid_target(pos):
+                if valid_target(pos):
+                    if self.selected_piece is None:
                         if not isinstance(self.board.get_piece(pos), EmptyPiece):
                             self.selected_piece = self.board.get_piece(pos)
-                            updated_legal_moves = []
-                            copied_board = copy.deepcopy(self.board)
-                            for move in self.selected_piece.legal_moves:
-                                self.selected_piece.make_move(copied_board, move)
-                                if not copied_board.current_player.is_check(copied_board):
-                                    updated_legal_moves.append(move)
-                                copied_board = copy.deepcopy(self.board)
-
-                            if isinstance(self.selected_piece, King):
-                                for m in self.selected_piece.legal_moves:
-                                    if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
-                                        updated_legal_moves.remove(m)
-
-                            self.selected_piece.legal_moves = updated_legal_moves
-                            self.update()
-                else:
-                    if not isinstance(self.board.get_piece(pos), EmptyPiece):
-                        updated_legal_moves = []
-                        copied_board = copy.deepcopy(self.board)
-                        for move in self.selected_piece.legal_moves:
-                            self.selected_piece.make_move(copied_board, move)
-                            if not copied_board.current_player.is_check(copied_board):
-                                updated_legal_moves.append(move)
-                            copied_board = copy.deepcopy(self.board)
-
-                        if isinstance(self.selected_piece, King):
-                            for m in self.selected_piece.legal_moves:
-                                if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
-                                    updated_legal_moves.remove(m)
-
-                        self.selected_piece.legal_moves = updated_legal_moves
-                        self.update()
-
-                    move = self.selected_piece.get_move(pos)
-
-                    if move is not None and self.board.current_player.alliance == self.selected_piece.alliance:
-                        if isinstance(move, PromotionMove) and not self.promoting:
-                            self.promotion_view.setVisible(True)
-                            self.promoting = True
-                            self.promotion_move = move
-
-                        if not self.promoting:
-                            if isinstance(self.selected_piece, King):
-                                self.board.current_player.king_first_move = False
-                            if isinstance(move, EnPassantMove):
-                                self.board.active_en_passant.append(move)
-
-                            self.selected_piece.make_move(self.board, move)
-                            self.moves_done.append(move)
-                            self.moves_label.setText('\n'.join(map(str, self.moves_done)))
-                            self.selected_piece = None
-                            self.board.current_player.next_player()
-                            self.board.calculate_legal_moves()
-                            if self.board.current_player.is_check(self.board):
-                                self.check_mate = self.board.current_player.is_checkmate()
-                            else:
-                                self.stale_mate = self.board.current_player.is_stalemate()
-
+                            self.update_legal_moves()
                             self.update()
                     else:
-                        piece = self.board.get_piece(pos)
-                        if not isinstance(piece, EmptyPiece):
-                            self.selected_piece = piece
+                        if not isinstance(self.board.get_piece(pos), EmptyPiece):
+                            self.update_legal_moves()
                             self.update()
+
+                        move = self.selected_piece.get_move(pos)
+
+                        if move is not None and self.board.current_player.alliance == self.selected_piece.alliance:
+                            if isinstance(move, PromotionMove) and not self.promoting:
+                                self.promotion_view.setVisible(True)
+                                self.promoting = True
+                                self.promotion_move = move
+
+                            if not self.promoting:
+                                if isinstance(self.selected_piece, King):
+                                    self.board.current_player.king_first_move = False
+                                if isinstance(move, EnPassantMove):
+                                    self.board.active_en_passant.append(move)
+
+                                self.selected_piece.make_move(self.board, move)
+                                self.moves_done.append(move)
+                                self.moves_label.setText('\n'.join(map(str, self.moves_done)))
+                                self.selected_piece = None
+                                self.board.current_player.next_player()
+                                self.board.calculate_legal_moves()
+                                if self.board.current_player.is_check(self.board):
+                                    self.check_mate = self.board.current_player.is_checkmate()
+                                else:
+                                    self.stale_mate = self.board.current_player.is_stalemate()
+
+                                self.update()
+                        else:
+                            piece = self.board.get_piece(pos)
+                            if not isinstance(piece, EmptyPiece):
+                                self.selected_piece = piece
+                                self.update()
 
         elif QMouseEvent.button() == Qt.RightButton:
             if len(self.moves_done) > 0 and not (self.check_mate or self.stale_mate):
@@ -227,3 +203,19 @@ class MainWindow(QWidget):
                 self.stale_mate = self.board.current_player.is_stalemate()
 
             self.update()
+
+    def update_legal_moves(self):
+        updated_legal_moves = []
+        copied_board = copy.deepcopy(self.board)
+        for move in self.selected_piece.legal_moves:
+            self.selected_piece.make_move(copied_board, move)
+            if not copied_board.current_player.is_check(copied_board):
+                updated_legal_moves.append(move)
+            copied_board = copy.deepcopy(self.board)
+
+        if isinstance(self.selected_piece, King):
+            for m in self.selected_piece.legal_moves:
+                if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
+                    updated_legal_moves.remove(m)
+
+        self.selected_piece.legal_moves = updated_legal_moves
