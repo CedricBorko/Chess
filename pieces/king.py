@@ -20,9 +20,8 @@ class King(Piece):
         for offset in offsets:
 
             possible_target = self.position + offset
-
             if self.alliance == Alliance.White and board.white_player.king_first_move or \
-                self.alliance == Alliance.Black and board.black_player.king_first_move:
+                    self.alliance == Alliance.Black and board.black_player.king_first_move:
 
                 if offset == 1:
                     piece_a = board.get_piece(possible_target)
@@ -55,8 +54,8 @@ class King(Piece):
 
                     if not path_under_attack:
                         if isinstance(piece_a, EmptyPiece) and \
-                            isinstance(piece_b, EmptyPiece) and \
-                            isinstance(piece_c, EmptyPiece):
+                                isinstance(piece_b, EmptyPiece) and \
+                                isinstance(piece_c, EmptyPiece):
                             possible_rook = board.get_piece(possible_target - 3)
                             if isinstance(possible_rook, Rook) and possible_rook.original_rook:
                                 if possible_rook.first_move and possible_rook.alliance == self.alliance:

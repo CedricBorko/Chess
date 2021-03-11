@@ -41,18 +41,21 @@ class Board:
         return self.pieces[index]
 
     def create_standard_board(self):
+        """
         self.pieces = [EmptyPiece(i) for i in range(64)]
         self.set_piece(0, Rook(0, Alliance.Black, original_rook=True), EmptyPiece(0))
         self.set_piece(4, King(4, Alliance.Black), EmptyPiece(4))
         self.set_piece(7, Rook(7, Alliance.Black, original_rook=True), EmptyPiece(7))
+        self.set_piece(17, Pawn(17, Alliance.Black), EmptyPiece(17))
         self.set_piece(48, Pawn(48, Alliance.White), EmptyPiece(48))
         self.set_piece(60, King(60, Alliance.White), EmptyPiece(60))
         self.set_piece(56, Rook(56, Alliance.White, original_rook=True), EmptyPiece(56))
         self.set_piece(63, Rook(63, Alliance.White, original_rook=True), EmptyPiece(63))
-        """self.pieces = [Rook(0, Alliance.Black), Knight(1, Alliance.Black),
+        """
+        self.pieces = [Rook(0, Alliance.Black, original_rook=True), Knight(1, Alliance.Black),
                        Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
-                       Knight(6, Alliance.Black), Rook(7, Alliance.Black)]
+                       Knight(6, Alliance.Black), Rook(7, Alliance.Black, original_rook=True)]
 
         self.pieces += [Pawn(i, Alliance.Black) for i in range(8, 16)]
 
@@ -60,13 +63,11 @@ class Board:
 
         self.pieces += [Pawn(i, Alliance.White) for i in range(48, 56)]
 
-        self.pieces += [Rook(56, Alliance.White), Knight(57, Alliance.White),
+        self.pieces += [Rook(56, Alliance.White, original_rook=True), Knight(57, Alliance.White),
                         Bishop(58, Alliance.White), Queen(59, Alliance.White),
                         King(60, Alliance.White), Bishop(61, Alliance.White),
-                        Knight(62, Alliance.White), Rook(63, Alliance.White)]
+                        Knight(62, Alliance.White), Rook(63, Alliance.White, original_rook=True)]
 
-        self.white_player.king = self.get_piece(60)
-        self.black_player.king = self.get_piece(4)"""
 
     def __str__(self):
         output = ' '.join([self.get_piece(i).__str__() for i in range(0, 8)]) + " 8" + "\n"

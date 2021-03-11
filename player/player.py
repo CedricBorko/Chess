@@ -9,7 +9,6 @@ class Player:
         self.board = board
         self.alliance = alliance
         self.moves = moves or []
-        self.king = king
         self.king_first_move = True
         self.rook_q_first_move = True
         self.rook_k_first_move = True

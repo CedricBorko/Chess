@@ -78,9 +78,6 @@ class Piece:
             new_piece = self.__class__(move.target, move.piece.alliance)
             board.set_piece(move.target, new_piece, self)
 
-            if isinstance(new_piece, King):
-                board.current_player.king = new_piece
-
 
 class EmptyPiece(Piece):
     ABBREVIATION = "·"
