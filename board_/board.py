@@ -1,6 +1,6 @@
 import string
 
-from chess_board.move import AttackMove, Move, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
+from board_.move import AttackMove, Move, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
 from pieces.alliance import get_direction
 from pieces.bishop import Bishop
 from pieces.king import King

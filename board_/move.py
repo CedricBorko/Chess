@@ -1,4 +1,4 @@
-from chess_board.utils import pos_to_letter_code
+from board_.utils import pos_to_letter_code
 
 
 class Move:

@@ -1,17 +1,18 @@
 import copy
 
-from chess_board.move import AttackMove
+from board_.move import AttackMove
 from pieces.king import King
 
 
 class Player:
-    def __init__(self, board, alliance, king=None, moves=None):
+    def __init__(self, board, alliance, moves=None):
         self.board = board
         self.alliance = alliance
         self.moves = moves or []
         self.king_first_move = True
         self.rook_q_first_move = True
         self.rook_k_first_move = True
+        self.lost_pieces = []
 
     def next_player(self):
         self.board.current_player = self.opponent()

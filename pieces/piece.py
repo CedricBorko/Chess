@@ -1,5 +1,5 @@
-from chess_board.move import CastleMove, PromotionMove, EnPassantAttackMove, EnPassantMove
-from chess_board.utils import pos_to_letter_code
+from board_.move import CastleMove, PromotionMove, EnPassantAttackMove, EnPassantMove
+from board_.utils import pos_to_letter_code
 from pieces.alliance import Alliance, get_direction
 
 
@@ -75,6 +75,7 @@ class Piece:
                             EmptyPiece(move.attacked_piece.position),
                             move.attacked_piece)
             board.active_en_passant.remove(move.en_passant_move)
+
         else:
             new_piece = self.__class__(move.target, move.piece.alliance)
             board.set_piece(move.target, new_piece, self)

@@ -1,5 +1,5 @@
-from chess_board.move import Move, AttackMove
-from chess_board.utils import valid_target
+from board_.move import Move, AttackMove
+from board_.utils import valid_target
 from pieces.piece import Piece, EmptyPiece
 
 

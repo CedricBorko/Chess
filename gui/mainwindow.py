@@ -1,12 +1,12 @@
 import copy
 
 from PySide6.QtCore import Qt, QRect
-from PySide6.QtGui import QPainter, QImage, QFont
+from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen
 from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton
 
-from chess_board.board import Board
-from chess_board.move import AttackMove, PromotionMove, CastleMove, EnPassantMove
-from chess_board.utils import valid_target
+from board_.board import Board
+from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
+from board_.utils import valid_target
 from pieces.bishop import Bishop
 from pieces.king import King
 from pieces.knight import Knight
@@ -33,6 +33,8 @@ class Window(QMainWindow):
 
 
 class MainWindow(QWidget):
+    TILE_SIZE = 100
+
     def __init__(self, parent):
         super().__init__(parent)
 
@@ -63,30 +65,48 @@ class MainWindow(QWidget):
 
     def paintEvent(self, QPaintEvent):
         qp = QPainter(self)
+        qp.setPen(QPen(Qt.black, 3))
+        qp.setRenderHint(QPainter.Antialiasing)
+
+        for i in range(8):
+            for j in range(8):
+                if (i + j) % 2 == 0:
+                    qp.setBrush(QBrush(QColor("#F2D9BB")))
+                else:
+                    qp.setBrush(QBrush(QColor("#BF8A6B")))
+                qp.drawRect(i * self.TILE_SIZE, j * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE)
+
+        if self.selected_piece is not None:
+            qp.setBrush(QBrush(QColor("#6495ED")))
+            qp.drawRect(self.selected_piece.position % 8 * self.TILE_SIZE,
+                        self.selected_piece.position // 8 * self.TILE_SIZE,
+                        self.TILE_SIZE, self.TILE_SIZE)
 
         if self.selected_piece is not None and not isinstance(self.selected_piece, EmptyPiece):
             if self.selected_piece.alliance == self.board.current_player.alliance:
                 for move in self.selected_piece.legal_moves:
-                    if isinstance(move, AttackMove):
-                        qp.fillRect(move.target % 8 * 100, move.target // 8 * 100, 100, 100, Qt.red)
+                    if isinstance(move, AttackMove) or isinstance(move, EnPassantAttackMove):
+
+                        qp.setBrush(QBrush(QColor("#FF495A")))
                     else:
-                        qp.fillRect(move.target % 8 * 100, move.target // 8 * 100, 100, 100, Qt.green)
+                        qp.setBrush(QBrush(QColor("#80F576")))
+
+                    qp.drawRect(move.target % 8 * self.TILE_SIZE, move.target // 8 * self.TILE_SIZE,
+                                self.TILE_SIZE, self.TILE_SIZE)
 
         for i in range(64):
             piece = self.board.get_piece(i)
             if not isinstance(piece, EmptyPiece):
-                qp.drawImage(QRect(i % 8 * 100, i // 8 * 100, 100, 100),
-                             QImage(f"pieces/images/{piece.alliance.lower()}/{piece.__class__.__name__}.png"))
-
-        for i in range(8):
-            for j in range(8):
-                qp.drawRect(i * 100, j * 100, 100, 100)
+                qp.drawImage(QRect(i % 8 * self.TILE_SIZE, i // 8 * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE),
+                             QImage(f"pieces/images/set1/{piece.alliance.lower()}/{piece.__class__.__name__}.png"))
 
         qp.setFont(QFont("Arial", 32))
 
         for l, (letter, number) in enumerate(zip("abcdefgh", "87654321")):
-            qp.drawText(QRect(l * 100, 800, 100, 100), Qt.AlignCenter, letter)
-            qp.drawText(QRect(800, l * 100, 100, 100), Qt.AlignCenter, number)
+            qp.drawText(QRect(l * self.TILE_SIZE, self.TILE_SIZE * 8, self.TILE_SIZE, self.TILE_SIZE), Qt.AlignCenter,
+                        letter)
+            qp.drawText(QRect(self.TILE_SIZE * 8, l * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE), Qt.AlignCenter,
+                        number)
 
         if self.check_mate:
             qp.drawText(QRect(0, 0, self.width(), self.height()), Qt.AlignCenter,
@@ -97,8 +117,9 @@ class MainWindow(QWidget):
 
     def mousePressEvent(self, QMouseEvent):
         if QMouseEvent.button() == Qt.LeftButton:
-            x, y = QMouseEvent.pos().x() // 100, QMouseEvent.pos().y() // 100
+            x, y = QMouseEvent.pos().x() // self.TILE_SIZE, QMouseEvent.pos().y() // self.TILE_SIZE
             pos = y * 8 + x
+
             if not (self.check_mate or self.stale_mate):
                 if self.selected_piece is None:
                     if valid_target(pos):

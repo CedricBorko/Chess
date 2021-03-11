@@ -1,5 +1,5 @@
-from chess_board.utils import valid_target, on_row
-from chess_board.move import Move, AttackMove, PromotionMove, EnPassantMove, EnPassantAttackMove
+from board_.utils import valid_target, on_row
+from board_.move import Move, AttackMove, PromotionMove, EnPassantMove, EnPassantAttackMove
 from pieces.alliance import get_direction
 from pieces.piece import Piece, EmptyPiece
 
