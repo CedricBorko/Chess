@@ -129,9 +129,7 @@ class Board:
             self.set_piece(move.target - move_back, Pawn(move.target - move_back, move.piece.alliance),
                            EmptyPiece(move.target))
             move.piece.position = move.target - move_back
-            print(self.active_en_passant)
             self.active_en_passant.remove(move)
-            print(self.active_en_passant)
 
         elif isinstance(move, EnPassantAttackMove):
             self.set_piece(move.piece.position, move.piece, EmptyPiece(move.target))
