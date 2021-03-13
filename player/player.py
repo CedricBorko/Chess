@@ -15,6 +15,7 @@ class Player:
 
     def next_player(self):
         self.board.current_player = self.opponent()
+        self.board.calculate_legal_moves()
 
     def opponent(self):
         pass
@@ -37,7 +38,7 @@ class Player:
                         return True
         return False
 
-    def is_checkmate(self):
+    def get_possible_moves(self):
         pieces = self.active_pieces(self.board)
         for piece in pieces:
             piece.calculate_legal_moves(self.board)
@@ -47,27 +48,10 @@ class Player:
                 move.execute(copied_board)
                 if not copied_board.current_player.is_check(copied_board):
                     updated_legal_moves.append(move)
-                copied_board = copy.deepcopy(self.board)
+                move.undo(copied_board)
             piece.legal_moves = updated_legal_moves
 
-        moves = [move for piece in pieces for move in piece.legal_moves]
-
-        return len(moves) == 0
-
-    def is_stalemate(self):
-        pieces = self.active_pieces(self.board)
-        for piece in pieces:
-            piece.calculate_legal_moves(self.board)
-            updated_legal_moves = []
-            copied_board = copy.deepcopy(self.board)
-            for move in piece.legal_moves:
-                move.execute(copied_board)
-                if not copied_board.current_player.is_check(copied_board):
-                    updated_legal_moves.append(move)
-                copied_board = copy.deepcopy(self.board)
-            piece.legal_moves = updated_legal_moves
-
-        return len([move for piece in pieces for move in piece.legal_moves]) == 0
+        return [move for piece in pieces for move in piece.legal_moves]
 
     def __str__(self):
         return self.__class__.__name__
