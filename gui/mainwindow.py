@@ -170,6 +170,7 @@ class MainWidget(QWidget):
                             t = Thread(target=self.update_legal_moves)
                             t.start()
                             t.join()
+                            self.update()
 
                     else:
                         piece = self.board.get_piece(pos)
@@ -177,11 +178,17 @@ class MainWidget(QWidget):
                             t = Thread(target=self.update_legal_moves)
                             t.start()
                             t.join()
+                            self.update()
 
                         move = self.selected_piece.get_move(pos)
 
                         if move is not None and self.board.current_player.alliance == self.selected_piece.alliance:
                             if isinstance(move, PromotionMove) and not self.promoting:
+                                for p in self.promotions:
+                                    p.setIcon(QIcon(
+                                        f"pieces/images/set1/{self.selected_piece.alliance}/{p.objectName()}.png"))
+                                    p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
+                                self.update()
                                 self.promotion_view.setVisible(True)
                                 self.promoting = True
                                 self.promotion_move = move
@@ -210,11 +217,12 @@ class MainWidget(QWidget):
                                     self.check_mate = in_check and not has_moves
                                 else:
                                     self.stale_mate = not in_check and not has_moves
+                                self.update()
                         else:
                             piece = self.board.get_piece(pos)
                             if not isinstance(piece, EmptyPiece):
                                 self.selected_piece = piece
-                    self.update()
+                                self.update()
 
         elif QMouseEvent.button() == Qt.RightButton:
             if len(self.board.moves_done) > 0 and not (self.check_mate or self.stale_mate):
@@ -223,17 +231,11 @@ class MainWidget(QWidget):
                 self.board.current_player.next_player()
                 self.board.current_player.moves_done.remove(move)
                 self.selected_piece = None
-                self.board.calculate_legal_moves()
                 self.moves_label.setText('\n'.join(map(str, self.board.moves_done)))
                 self.update()
 
     def choose_promotion(self):
         if self.promotion_move is not None:
-            for p in self.promotions:
-                p.setIcon(QIcon(
-                    f"pieces/images/set1/{self.selected_piece.alliance}/{p.objectName()}.png"))
-                p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
-
             pieces = {"Queen": Queen(self.promotion_move.target, self.selected_piece.alliance),
                       "Knight": Knight(self.promotion_move.target, self.selected_piece.alliance),
                       "Bishop": Bishop(self.promotion_move.target, self.selected_piece.alliance),
@@ -252,13 +254,14 @@ class MainWidget(QWidget):
             self.selected_piece = None
             self.promotion_move = None
             self.board.current_player.next_player()
-            self.board.calculate_legal_moves()
+
+            in_check = self.board.current_player.is_check(self.board)
+            has_moves = len(self.board.current_player.get_possible_moves()) > 0
 
             if self.board.current_player.is_check(self.board):
-                self.check_mate = self.board.current_player.is_checkmate()
+                self.check_mate = in_check and not has_moves
             else:
-                self.stale_mate = self.board.current_player.is_stalemate()
-
+                self.stale_mate = not in_check and not has_moves
             self.update()
 
     def update_legal_moves(self):
