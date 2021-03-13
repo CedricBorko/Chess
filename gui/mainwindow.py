@@ -2,9 +2,10 @@ import copy
 import time
 from threading import Thread
 
-from PySide6.QtCore import Qt, QRect
-from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen
-from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton
+from PySide6.QtCore import Qt, QRect, QSize, QPoint
+from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen, QIcon, QPixmap, QPainterPath
+from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton, \
+    QSizePolicy
 
 from board_.board import Board
 from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
@@ -24,22 +25,34 @@ class Window(QMainWindow):
 
         self.w_partial, self.h_partial = monitor_size()
 
-        self.setStyleSheet("background: white")
-
         # Init Window
         self.setWindowTitle("Chess")
-        self.setGeometry(300, 80, 1400, 1000)
+        self.setStyleSheet("QWidget{background: rgb(48, 48, 48)}"
+                           "QLabel{color: white; border: 1px solid white}")
 
-        self.main_widget = MainWindow(self)
+        self.setMinimumSize(900, 600)
+
+        self.main_widget = MainWidget(self)
         self.setCentralWidget(self.main_widget)
+        self.main_widget.setMinimumSize(self.width(), self.height())
+
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Escape:
+            self.showNormal()
+        elif e.key() == Qt.Key_F11:
+            self.showFullScreen()
+
+    def resizeEvent(self, QResizeEvent):
+        self.main_widget.setMinimumSize(self.width(), self.height())
+        self.main_widget.resizeEvent(QResizeEvent)
 
 
-class MainWindow(QWidget):
-    TILE_SIZE = 100
+class MainWidget(QWidget):
 
     def __init__(self, parent):
         super().__init__(parent)
-
+        self.TILE_SIZE = 100
+        self.OFFSET = self.TILE_SIZE // 2
         self.main_layout = QGridLayout(self)
         self.selected_piece = None
         self.stale_mate = self.check_mate = False
@@ -48,67 +61,91 @@ class MainWindow(QWidget):
         self.board = Board()
 
         self.moves_label = QLabel(self)
-        self.moves_label.setGeometry(900, 0, 500, 1000)
-        self.moves_label.setFont(QFont("Arial", 16))
+        self.moves_label.setFont(QFont("TW Cen Mt", 14))
         self.moves_label.setAlignment(Qt.AlignHCenter)
+        self.moves_label.setWordWrap(True)
 
         self.promotion_view = QGroupBox(self)
-        self.promotion_view.setGeometry(700 // 2 - 200, 500 // 2 - 100, 800, 400)
-        self.promotion_view.setLayout(QHBoxLayout())
+        self.promotion_view.setLayout(QGridLayout())
         self.promotion_view.setVisible(False)
 
-        self.promotions = [QPushButton("Queen", self), QPushButton("Knight", self),
-                           QPushButton("Bishop", self), QPushButton("Rook", self)]
+        self.promotions = [QPushButton(self), QPushButton(self),
+                           QPushButton(self), QPushButton(self)]
 
-        for p in self.promotions:
+        for i, p in enumerate(self.promotions):
             p.clicked.connect(self.choose_promotion)
-            self.promotion_view.layout().addWidget(p)
+            p.setObjectName(["Bishop", "Knight", "Queen", "Rook"][i])
+            p.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            self.promotion_view.layout().addWidget(p, i % 2, i // 2)
 
     def paintEvent(self, QPaintEvent):
         qp = QPainter(self)
-        qp.setPen(QPen(Qt.black, 3))
         qp.setRenderHint(QPainter.Antialiasing)
+        qp.setPen(Qt.NoPen)
 
         for i in range(8):
             for j in range(8):
+                qp.setPen(Qt.NoPen)
                 if (i + j) % 2 == 0:
-                    qp.setBrush(QBrush(QColor("#F2D9BB")))
+                    qp.setBrush(QBrush(QColor("#758C51")))
                 else:
-                    qp.setBrush(QBrush(QColor("#BF8A6B")))
-                qp.drawRect(i * self.TILE_SIZE, j * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE)
+                    qp.setBrush(QBrush(QColor("#F2F0D8")))
+                qp.drawRect(self.OFFSET + i * self.TILE_SIZE,
+                            self.OFFSET + j * self.TILE_SIZE,
+                            self.TILE_SIZE, self.TILE_SIZE)
+
+                if i % 8 == 0:
+                    qp.setPen(QPen(Qt.black))
+                    qp.setFont(QFont("TW Cen Mt", self.height() // 40))
+                    qp.drawText(QRect(self.OFFSET + i * self.TILE_SIZE,
+                                      self.OFFSET + j * self.TILE_SIZE,
+                                      self.TILE_SIZE, self.TILE_SIZE), "12345678"[7-j])
+
+                if j == 7:
+                    qp.setPen(QPen(Qt.black))
+                    qp.drawText(QRect(self.OFFSET + i * self.TILE_SIZE,
+                                      self.OFFSET + j * self.TILE_SIZE,
+                                      self.TILE_SIZE, self.TILE_SIZE), "abcdefgh"[i], Qt.AlignBottom | Qt.AlignLeft)
+
 
         if self.selected_piece is not None:
-            qp.setBrush(QBrush(QColor("#6495ED")))
-            qp.drawRect(self.selected_piece.position % 8 * self.TILE_SIZE,
-                        self.selected_piece.position // 8 * self.TILE_SIZE,
-                        self.TILE_SIZE, self.TILE_SIZE)
+            qp.setPen(QPen(QColor("#ffcc00"), 3))
+            qp.setBrush(Qt.NoBrush)
+            qp.drawRect(self.OFFSET + self.selected_piece.position % 8 * self.TILE_SIZE,
+                        self.OFFSET + self.selected_piece.position // 8 * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE)
+        qp.setPen(Qt.NoPen)
+        for i in range(64):
+            piece = self.board.get_piece(i)
+            if not isinstance(piece, EmptyPiece):
+                qp.drawImage(QRect(self.OFFSET + i % 8 * self.TILE_SIZE,
+                                   self.OFFSET + i // 8 * self.TILE_SIZE,
+                                   self.TILE_SIZE, self.TILE_SIZE),
+                             QImage(f"pieces/images/set1/{piece.alliance.lower()}/{piece.__class__.__name__}.png"))
 
         if self.selected_piece is not None and not isinstance(self.selected_piece, EmptyPiece):
             if self.selected_piece.alliance == self.board.current_player.alliance:
                 for move in self.selected_piece.legal_moves:
+                    c = QColor(70, 70, 70)
+                    c.setAlpha(120)
                     if isinstance(move, AttackMove) or isinstance(move, EnPassantAttackMove) \
                         or (isinstance(move, PromotionMove) and move.attacked_piece is not None):
 
-                        qp.setBrush(QBrush(QColor("#FF495A")))
+                        qp.setBrush(QBrush(c))
+                        path = QPainterPath()
+                        path.addEllipse(QPoint(self.OFFSET + self.TILE_SIZE // 2 + move.target % 8 * self.TILE_SIZE,
+                                    self.OFFSET + self.TILE_SIZE // 2 + move.target // 8 * self.TILE_SIZE),
+                                        self.TILE_SIZE // 2, self.TILE_SIZE // 2)
+
+                        path.addEllipse(QPoint(self.OFFSET + self.TILE_SIZE // 2 + move.target % 8 * self.TILE_SIZE,
+                                              self.OFFSET + self.TILE_SIZE // 2 + move.target // 8 * self.TILE_SIZE),
+                                       self.TILE_SIZE * 0.35, self.TILE_SIZE * 0.35)
+                        qp.drawPath(path)
+
                     else:
-                        qp.setBrush(QBrush(QColor("#80F576")))
-
-                    qp.drawRect(move.target % 8 * self.TILE_SIZE, move.target // 8 * self.TILE_SIZE,
-                                self.TILE_SIZE, self.TILE_SIZE)
-
-        for i in range(64):
-            piece = self.board.get_piece(i)
-            if not isinstance(piece, EmptyPiece):
-                qp.drawImage(QRect(i % 8 * self.TILE_SIZE, i // 8 * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE),
-                             QImage(f"pieces/images/set1/{piece.alliance.lower()}/{piece.__class__.__name__}.png"))
-
-        qp.setFont(QFont("Arial", 32))
-
-        for l, (letter, number) in enumerate(zip("abcdefgh", "87654321")):
-            qp.drawText(QRect(l * self.TILE_SIZE, self.TILE_SIZE * 8, self.TILE_SIZE, self.TILE_SIZE), Qt.AlignCenter,
-                        letter)
-            qp.drawText(QRect(self.TILE_SIZE * 8, l * self.TILE_SIZE, self.TILE_SIZE, self.TILE_SIZE), Qt.AlignCenter,
-                        number)
+                        qp.setBrush(QBrush(c))
+                        qp.drawEllipse(QPoint(self.OFFSET + self.TILE_SIZE // 2 + move.target % 8 * self.TILE_SIZE,
+                                    self.OFFSET + self.TILE_SIZE // 2 + move.target // 8 * self.TILE_SIZE),
+                                    self.TILE_SIZE // 4, self.TILE_SIZE // 4)
 
         if self.check_mate:
             qp.drawText(QRect(0, 0, self.width(), self.height()), Qt.AlignCenter,
@@ -119,9 +156,12 @@ class MainWindow(QWidget):
 
     def mousePressEvent(self, QMouseEvent):
         if QMouseEvent.button() == Qt.LeftButton:
-            x, y = QMouseEvent.pos().x() // self.TILE_SIZE, QMouseEvent.pos().y() // self.TILE_SIZE
-            pos = y * 8 + x
-
+            x = (-self.OFFSET + QMouseEvent.pos().x()) // self.TILE_SIZE
+            y = (-self.OFFSET + QMouseEvent.pos().y()) // self.TILE_SIZE
+            if 0 <= y < 8 and 0 <= x < 8:
+                pos = y * 8 + x
+            else:
+                return
             if not (self.check_mate or self.stale_mate):
                 if valid_target(pos):
                     if self.selected_piece is None:
@@ -144,6 +184,10 @@ class MainWindow(QWidget):
 
                         if move is not None and self.board.current_player.alliance == self.selected_piece.alliance:
                             if isinstance(move, PromotionMove) and not self.promoting:
+                                for p in self.promotions:
+                                    p.setIcon(QIcon(
+                                        f"pieces/images/set1/{self.selected_piece.alliance}/{p.objectName()}.png"))
+                                    p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
                                 self.promotion_view.setVisible(True)
                                 self.promoting = True
                                 self.promotion_move = move
@@ -161,7 +205,7 @@ class MainWindow(QWidget):
 
                                 self.board.moves_done.append(move)
                                 self.board.current_player.moves_done.append(move)
-                                self.moves_label.setText('\n'.join(map(str, self.board.moves_done)))
+                                self.moves_label.setText(''.join(map(str, self.board.moves_done)))
                                 self.selected_piece = None
                                 self.board.current_player.next_player()
                                 self.board.calculate_legal_moves()
@@ -189,22 +233,22 @@ class MainWindow(QWidget):
                 self.update()
 
     def choose_promotion(self):
-        name = self.sender().text()
         if self.promotion_move is not None:
             pieces = {"Queen": Queen(self.promotion_move.target, self.selected_piece.alliance),
                       "Knight": Knight(self.promotion_move.target, self.selected_piece.alliance),
                       "Bishop": Bishop(self.promotion_move.target, self.selected_piece.alliance),
                       "Rook": Rook(self.promotion_move.target, self.selected_piece.alliance)}
 
-            piece = pieces[name]
+            piece = pieces[self.sender().objectName()]
 
             self.promotion_move.promotion_to = piece
-            self.moves_done.append(self.promotion_move)
+            self.board.moves_done.append(self.promotion_move)
+            self.board.current_player.moves_done.append(self.promotion_move)
             self.promoting = False
             self.promotion_view.setVisible(False)
 
             self.promotion_move.execute(self.board)
-            self.moves_label.setText('\n'.join(map(str, self.moves_done)))
+            self.moves_label.setText('\n'.join(map(str, self.board.moves_done)))
             self.selected_piece = None
             self.promotion_move = None
             self.board.current_player.next_player()
@@ -218,8 +262,6 @@ class MainWindow(QWidget):
             self.update()
 
     def update_legal_moves(self):
-        start = time.time()
-
         if self.selected_piece.alliance == self.board.current_player.alliance:
             updated_legal_moves = []
             copied_board = copy.deepcopy(self.board)
@@ -235,4 +277,14 @@ class MainWindow(QWidget):
                         updated_legal_moves.remove(m)
 
             self.selected_piece.legal_moves = updated_legal_moves
-        print(time.time() - start)
+
+    def resizeEvent(self, QResizeEvent):
+        self.TILE_SIZE = self.parent().height() // 9
+        self.OFFSET = self.TILE_SIZE // 2
+        self.moves_label.setGeometry(self.OFFSET * 2 + 8 * self.TILE_SIZE, self.OFFSET,
+                                     self.width() - 8 * self.TILE_SIZE - self.OFFSET * 3,
+                                     self.height() - 2 * self.OFFSET)
+        self.promotion_view.setGeometry(self.OFFSET + self.TILE_SIZE * 2, self.OFFSET + self.TILE_SIZE * 2,
+                                        self.TILE_SIZE * 4, self.TILE_SIZE * 4)
+        for p in self.promotions:
+            p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))

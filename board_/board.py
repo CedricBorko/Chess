@@ -29,7 +29,6 @@ class Board:
         self.calculate_legal_moves()
 
     def calculate_legal_moves(self):
-
         for piece in self.current_player.active_pieces(self):
             piece.calculate_legal_moves(self)
 
