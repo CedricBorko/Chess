@@ -1,4 +1,5 @@
 import string
+import time
 
 from board_.move import AttackMove, Move, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
 from pieces.alliance import get_direction
@@ -21,16 +22,16 @@ class Board:
         self.black_player = BlackPlayer(self, Alliance.Black)
 
         self.active_en_passant = []
+        self.moves_done = []
         self.current_player = self.white_player
 
         self.create_standard_board()
         self.calculate_legal_moves()
 
     def calculate_legal_moves(self):
-        for i in range(64):
-            piece = self.pieces[i]
-            if not isinstance(piece, EmptyPiece):
-                self.pieces[i].calculate_legal_moves(self)
+
+        for piece in self.current_player.active_pieces(self):
+            piece.calculate_legal_moves(self)
 
     def get_alliance_pieces(self, alliance):
         return [piece for piece in self.pieces if piece.alliance == alliance]

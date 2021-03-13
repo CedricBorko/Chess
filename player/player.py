@@ -11,6 +11,7 @@ class Player:
         self.moves = moves or []
         self.king_first_move = True
         self.lost_pieces = []
+        self.moves_done = []
 
     def next_player(self):
         self.board.current_player = self.opponent()
@@ -29,13 +30,12 @@ class Player:
             piece.calculate_legal_moves(board)
         self.moves = [piece.legal_moves for piece in pieces]
 
-        moves_with_king_as_target = []
         for move_list in self.moves:
             for move in move_list:
                 if isinstance(move, AttackMove) or isinstance(move, PromotionMove):
                     if isinstance(move.attacked_piece, King):
-                        moves_with_king_as_target.append(move)
-        return len(moves_with_king_as_target) > 0
+                        return True
+        return False
 
     def is_checkmate(self):
         pieces = self.active_pieces(self.board)
@@ -67,9 +67,7 @@ class Player:
                 copied_board = copy.deepcopy(self.board)
             piece.legal_moves = updated_legal_moves
 
-        moves = [move for piece in pieces for move in piece.legal_moves]
-
-        return len(moves) == 0
+        return len([move for piece in pieces for move in piece.legal_moves]) == 0
 
     def __str__(self):
         return self.__class__.__name__

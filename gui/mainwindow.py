@@ -1,5 +1,5 @@
 import copy
-from concurrent.futures import ProcessPoolExecutor
+import time
 from threading import Thread
 
 from PySide6.QtCore import Qt, QRect
@@ -7,7 +7,7 @@ from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen
 from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton
 
 from board_.board import Board
-from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove, Move
+from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
 from board_.utils import valid_target
 from pieces.bishop import Bishop
 from pieces.king import King
@@ -45,7 +45,6 @@ class MainWindow(QWidget):
         self.stale_mate = self.check_mate = False
         self.promotion_move = None
         self.promoting = False
-        self.moves_done = []
         self.board = Board()
 
         self.moves_label = QLabel(self)
@@ -128,11 +127,17 @@ class MainWindow(QWidget):
                     if self.selected_piece is None:
                         if not isinstance(self.board.get_piece(pos), EmptyPiece):
                             self.selected_piece = self.board.get_piece(pos)
-                            self.update_legal_moves()
+                            t = Thread(target=self.update_legal_moves)
+                            t.start()
+                            t.join()
                             self.update()
+
                     else:
-                        if not isinstance(self.board.get_piece(pos), EmptyPiece):
-                            self.update_legal_moves()
+                        piece = self.board.get_piece(pos)
+                        if not isinstance(piece, EmptyPiece) and not piece == self.selected_piece:
+                            t = Thread(target=self.update_legal_moves)
+                            t.start()
+                            t.join()
                             self.update()
 
                         move = self.selected_piece.get_move(pos)
@@ -154,8 +159,9 @@ class MainWindow(QWidget):
 
                                 move.execute(self.board)
 
-                                self.moves_done.append(move)
-                                self.moves_label.setText('\n'.join(map(str, self.moves_done)))
+                                self.board.moves_done.append(move)
+                                self.board.current_player.moves_done.append(move)
+                                self.moves_label.setText('\n'.join(map(str, self.board.moves_done)))
                                 self.selected_piece = None
                                 self.board.current_player.next_player()
                                 self.board.calculate_legal_moves()
@@ -172,13 +178,14 @@ class MainWindow(QWidget):
                                 self.update()
 
         elif QMouseEvent.button() == Qt.RightButton:
-            if len(self.moves_done) > 0 and not (self.check_mate or self.stale_mate):
-                move = self.moves_done.pop()
+            if len(self.board.moves_done) > 0 and not (self.check_mate or self.stale_mate):
+                move = self.board.moves_done.pop()
                 move.undo(self.board)
                 self.board.current_player.next_player()
+                self.board.current_player.moves_done.remove(move)
                 self.selected_piece = None
                 self.board.calculate_legal_moves()
-                self.moves_label.setText('\n'.join(map(str, self.moves_done)))
+                self.moves_label.setText('\n'.join(map(str, self.board.moves_done)))
                 self.update()
 
     def choose_promotion(self):
@@ -188,6 +195,7 @@ class MainWindow(QWidget):
                       "Knight": Knight(self.promotion_move.target, self.selected_piece.alliance),
                       "Bishop": Bishop(self.promotion_move.target, self.selected_piece.alliance),
                       "Rook": Rook(self.promotion_move.target, self.selected_piece.alliance)}
+
             piece = pieces[name]
 
             self.promotion_move.promotion_to = piece
@@ -210,17 +218,21 @@ class MainWindow(QWidget):
             self.update()
 
     def update_legal_moves(self):
-        updated_legal_moves = []
-        copied_board = copy.deepcopy(self.board)
-        for move in self.selected_piece.legal_moves:
-            move.execute(copied_board)
-            if not copied_board.current_player.is_check(copied_board):
-                updated_legal_moves.append(move)
+        start = time.time()
+
+        if self.selected_piece.alliance == self.board.current_player.alliance:
+            updated_legal_moves = []
             copied_board = copy.deepcopy(self.board)
+            for move in self.selected_piece.legal_moves:
+                move.execute(copied_board)
+                if not copied_board.current_player.is_check(copied_board):
+                    updated_legal_moves.append(move)
+                move.undo(copied_board)
 
-        if isinstance(self.selected_piece, King):
-            for m in self.selected_piece.legal_moves:
-                if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
-                    updated_legal_moves.remove(m)
+            if isinstance(self.selected_piece, King):
+                for m in self.selected_piece.legal_moves:
+                    if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
+                        updated_legal_moves.remove(m)
 
-        self.selected_piece.legal_moves = updated_legal_moves
+            self.selected_piece.legal_moves = updated_legal_moves
+        print(time.time() - start)

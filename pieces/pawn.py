@@ -44,11 +44,11 @@ class Pawn(Piece):
 
                     piece = board.get_piece(possible_target)
                     try:
-                        en_passant_move = board.active_en_passant[-1]
+                        en_passant_move = board.current_player.opponent().moves_done[-1]
                     except IndexError:
                         en_passant_move = None
                     if isinstance(piece, EmptyPiece):
-                        if en_passant_move is not None:
+                        if isinstance(en_passant_move, EnPassantMove):
                             if en_passant_move.jumped_position == possible_target \
                                 and en_passant_move.piece.alliance != self.alliance:
                                 self.legal_moves.append(EnPassantAttackMove(self, possible_target, en_passant_move))
@@ -67,12 +67,12 @@ class Pawn(Piece):
 
                     piece = board.get_piece(possible_target)
                     try:
-                        en_passant_move = board.active_en_passant[-1]
+                        en_passant_move = board.current_player.opponent().moves_done[-1]
                     except IndexError:
                         en_passant_move = None
 
                     if isinstance(piece, EmptyPiece):
-                        if en_passant_move is not None:
+                        if isinstance(en_passant_move, EnPassantMove):
 
                             if en_passant_move.jumped_position == possible_target \
                                 and en_passant_move.piece.alliance != self.alliance:

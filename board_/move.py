@@ -30,7 +30,10 @@ class Move:
         board.set_piece(self.target, EmptyPiece())
 
         if isinstance(self, EnPassantMove):
-            board.active_en_passant.remove(self)
+            try:
+                board.active_en_passant.remove(self)
+            except ValueError:
+                pass
 
 
 class AttackMove(Move):
