@@ -39,17 +39,6 @@ class Board:
         return self.pieces[index]
 
     def create_standard_board(self):
-        """
-        self.pieces = [EmptyPiece(i) for i in range(64)]
-        self.set_piece(0, Rook(0, Alliance.Black, original_rook=True), EmptyPiece(0))
-        self.set_piece(4, King(4, Alliance.Black), EmptyPiece(4))
-        self.set_piece(7, Rook(7, Alliance.Black, original_rook=True), EmptyPiece(7))
-        self.set_piece(17, Pawn(17, Alliance.Black), EmptyPiece(17))
-        self.set_piece(48, Pawn(48, Alliance.White), EmptyPiece(48))
-        self.set_piece(60, King(60, Alliance.White), EmptyPiece(60))
-        self.set_piece(56, Rook(56, Alliance.White, original_rook=True), EmptyPiece(56))
-        self.set_piece(63, Rook(63, Alliance.White, original_rook=True), EmptyPiece(63))
-        """
         self.pieces = [Rook(0, Alliance.Black, original_rook=True), Knight(1, Alliance.Black),
                        Bishop(2, Alliance.Black), Queen(3, Alliance.Black),
                        King(4, Alliance.Black), Bishop(5, Alliance.Black),
@@ -78,53 +67,5 @@ class Board:
         output += ' '.join("abcdefgh")
         return output
 
-    def set_piece(self, target, new_piece, old_piece):
-        self.pieces[old_piece.position] = EmptyPiece(old_piece.position)
-        self.pieces[target] = new_piece
-
-    def undo(self, move):
-        destination = move.target
-        if isinstance(move, AttackMove):
-            moved_piece = move.piece
-            other_piece = move.attacked_piece
-            self.set_piece(moved_piece.position, moved_piece, EmptyPiece(moved_piece.position))
-            self.set_piece(other_piece.position, other_piece, EmptyPiece(other_piece.position))
-            if isinstance(move.piece, King):
-                self.current_player.opponent().king_first_move = True
-        elif isinstance(move, Move):
-            moved_piece = move.piece
-            self.set_piece(moved_piece.position, moved_piece, EmptyPiece(moved_piece.position))
-            self.set_piece(destination, EmptyPiece(destination), EmptyPiece(destination))
-            if isinstance(move.piece, King):
-                self.current_player.opponent().king_first_move = True
-        elif isinstance(move, PromotionMove):
-            if move.other_piece is None:
-                self.set_piece(move.pawn.position, move.pawn, EmptyPiece(move.target))
-            else:
-                self.set_piece(move.pawn.position, move.pawn, EmptyPiece(move.target))
-                self.set_piece(move.target, move.other_piece, EmptyPiece(move.target))
-        elif isinstance(move, CastleMove):
-            if move.king_side:
-                self.set_piece(move.king.position, move.king, EmptyPiece(move.target))
-                self.set_piece(move.target + 1,
-                               Rook(move.target + 1, move.king.alliance, original_rook=True),
-                               EmptyPiece(move.target - 1))
-            else:
-                self.set_piece(move.king.position, move.king, EmptyPiece(move.target + 1))
-                self.set_piece(move.target - 2,
-                               Rook(move.target - 2, move.king.alliance, original_rook=True),
-                               EmptyPiece(move.target))
-            self.current_player.opponent().king_first_move = True
-        elif isinstance(move, EnPassantMove):
-            moved_piece = move.piece
-            self.set_piece(move.target, EmptyPiece(moved_piece.position), moved_piece)
-            move_back = 16 * get_direction(moved_piece.alliance)
-            self.set_piece(move.target - move_back, Pawn(move.target - move_back, move.piece.alliance),
-                           EmptyPiece(move.target))
-            move.piece.position = move.target - move_back
-            self.active_en_passant.remove(move)
-
-        elif isinstance(move, EnPassantAttackMove):
-            self.set_piece(move.piece.position, move.piece, EmptyPiece(move.target))
-            self.set_piece(move.attacked_piece.position, move.attacked_piece, EmptyPiece(move.attacked_piece.position))
-            self.active_en_passant.append(move.en_passant_move)
+    def set_piece(self, index, piece):
+        self.pieces[index] = piece

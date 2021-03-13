@@ -1,6 +1,6 @@
 import copy
 
-from board_.move import AttackMove
+from board_.move import AttackMove, PromotionMove
 from pieces.king import King
 
 
@@ -10,8 +10,6 @@ class Player:
         self.alliance = alliance
         self.moves = moves or []
         self.king_first_move = True
-        self.rook_q_first_move = True
-        self.rook_k_first_move = True
         self.lost_pieces = []
 
     def next_player(self):
@@ -34,7 +32,7 @@ class Player:
         moves_with_king_as_target = []
         for move_list in self.moves:
             for move in move_list:
-                if isinstance(move, AttackMove):
+                if isinstance(move, AttackMove) or isinstance(move, PromotionMove):
                     if isinstance(move.attacked_piece, King):
                         moves_with_king_as_target.append(move)
         return len(moves_with_king_as_target) > 0
@@ -46,7 +44,7 @@ class Player:
             updated_legal_moves = []
             copied_board = copy.deepcopy(self.board)
             for move in piece.legal_moves:
-                piece.make_move(copied_board, move)
+                move.execute(copied_board)
                 if not copied_board.current_player.is_check(copied_board):
                     updated_legal_moves.append(move)
                 copied_board = copy.deepcopy(self.board)
@@ -63,7 +61,7 @@ class Player:
             updated_legal_moves = []
             copied_board = copy.deepcopy(self.board)
             for move in piece.legal_moves:
-                piece.make_move(copied_board, move)
+                move.execute(copied_board)
                 if not copied_board.current_player.is_check(copied_board):
                     updated_legal_moves.append(move)
                 copied_board = copy.deepcopy(self.board)

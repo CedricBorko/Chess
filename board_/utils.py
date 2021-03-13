@@ -20,3 +20,4 @@ def letter_code_to_number(letter, num):
     x = string.ascii_lowercase.index(letter)
     y = 8 - num
     return y * 8 + x
+

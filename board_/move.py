@@ -1,11 +1,13 @@
+import copy
 from board_.utils import pos_to_letter_code
+from pieces.piece import EmptyPiece
 
 
 class Move:
-    def __init__(self, board, piece, target):
-        self.board = board
+    def __init__(self, piece, target):
         self.piece = piece
         self.target = target
+        self.coming_from = copy.deepcopy(self.piece.position)
 
     def __str__(self):
         return f"(M: {self.piece.show()} -> {pos_to_letter_code(self.target)})"
@@ -13,12 +15,27 @@ class Move:
     def __repr__(self):
         return f"(M: {self.piece.show()} -> {pos_to_letter_code(self.target)})"
 
+    def execute(self, board):
+        new_piece = self.piece.__class__(self.target, self.piece.alliance)
 
-class AttackMove:
-    def __init__(self, board, piece, target, attacked_piece):
-        self.board = board
-        self.piece = piece
-        self.target = target
+        board.set_piece(self.target, new_piece)
+        board.set_piece(self.coming_from, EmptyPiece())
+
+    def undo(self, board):
+        from pieces.piece import EmptyPiece
+
+        new_piece = self.piece.__class__(self.coming_from, self.piece.alliance)
+
+        board.set_piece(self.coming_from, new_piece)
+        board.set_piece(self.target, EmptyPiece())
+
+        if isinstance(self, EnPassantMove):
+            board.active_en_passant.remove(self)
+
+
+class AttackMove(Move):
+    def __init__(self, piece, target, attacked_piece):
+        super().__init__(piece, target)
         self.attacked_piece = attacked_piece
 
     def __repr__(self):
@@ -27,41 +44,107 @@ class AttackMove:
     def __str__(self):
         return f"(AM: {self.piece.show()} -> {self.attacked_piece.show()})"
 
+    def execute(self, board):
+        from pieces.piece import EmptyPiece
 
-class CastleMove:
-    def __init__(self, board, king, target, king_side=True):
-        self.board = board
-        self.king = king
-        self.target = target
+        new_piece = self.piece.__class__(self.target, self.piece.alliance)
+
+        board.set_piece(self.target, new_piece)
+        board.set_piece(self.coming_from, EmptyPiece())
+
+    def undo(self, board):
+        moved_piece = self.piece.__class__(self.coming_from, self.piece.alliance)
+        attacked_piece = self.attacked_piece.__class__(self.target, self.attacked_piece.alliance)
+
+        board.set_piece(self.coming_from, moved_piece)
+        board.set_piece(self.target, attacked_piece)
+
+
+class CastleMove(Move):
+    def __init__(self, piece, target, king_side=True):
+        super().__init__(piece, target)
         self.king_side = king_side
 
     def __repr__(self):
-        return f"(CM: {self.king.show()} -> {pos_to_letter_code(self.target)})"
+        return f"(CM: {self.piece.show()} -> {pos_to_letter_code(self.target)})"
 
     def __str__(self):
-        return f"(CM: {self.king.show()} -> {pos_to_letter_code(self.target)})"
+        return f"(CM: {self.piece.show()} -> {pos_to_letter_code(self.target)})"
+
+    def execute(self, board):
+        from pieces.piece import EmptyPiece
+        from pieces.rook import Rook
+        from pieces.king import King
+
+        new_king = King(self.target, self.piece.alliance)
+
+        if self.king_side:
+            new_rook = Rook(self.target - 1, self.piece.alliance)
+        else:
+            new_rook = Rook(self.target + 1, self.piece.alliance)
+
+        board.set_piece(new_rook.position, new_rook)
+        board.set_piece(new_king.position, new_king)
+        board.set_piece(self.coming_from, EmptyPiece())
+        board.set_piece(self.target + (1 if self.king_side else - 2), EmptyPiece())
+
+    def undo(self, board):
+        from pieces.piece import EmptyPiece
+        from pieces.rook import Rook
+
+        king = self.piece.__class__(self.coming_from, self.piece.alliance)
+        rook = Rook(self.coming_from + (3 if self.king_side else -4), self.piece.alliance, original_rook=True)
+
+        if self.king_side:
+            board.set_piece(self.coming_from, king)
+            board.set_piece(rook.position, rook)
+        else:
+            board.set_piece(self.coming_from, king)
+            board.set_piece(rook.position, rook)
+
+        board.set_piece(self.target, EmptyPiece())
+        board.set_piece(self.target - (1 if self.king_side else -1), EmptyPiece())
+
+        board.current_player.opponent().king_first_move = True
 
 
-class PromotionMove:
-    def __init__(self, board, pawn, target, other_piece=None):
-        self.board = board
-        self.pawn = pawn
-        self.target = target
-        self.other_piece = other_piece
+class PromotionMove(Move):
+    def __init__(self, piece, target, attacked_piece=None):
+        super().__init__(piece, target)
+        self.attacked_piece = attacked_piece
         self.promotion_to = None
 
     def __repr__(self):
-        return f"(PM: {self.pawn.show()} -> {self.promotion_to.show()})"
+        return f"(PM: {self.piece.show()} -> {self.promotion_to.show()})"
 
     def __str__(self):
-        return f"(PM: {self.pawn.show()} -> {self.promotion_to.show()})"
+        return f"(PM: {self.piece.show()} -> {self.promotion_to.show()})"
+
+    def execute(self, board):
+        from pieces.piece import EmptyPiece
+        from pieces.queen import Queen
+
+        if self.promotion_to is None:
+            self.promotion_to = Queen(self.target, self.piece.alliance)
+
+        board.set_piece(self.target, self.promotion_to)
+        board.set_piece(self.coming_from, EmptyPiece())
+
+    def undo(self, board):
+
+        if self.attacked_piece is not None:
+            attacked_piece = self.attacked_piece.__class__(self.target, self.attacked_piece.alliance)
+            board.set_piece(self.target, attacked_piece)
+        else:
+            board.set_piece(self.target, EmptyPiece())
+
+        moving_piece = self.piece.__class__(self.coming_from, self.piece.alliance)
+        board.set_piece(self.coming_from, moving_piece)
 
 
-class EnPassantMove:
-    def __init__(self, board, piece, target, jumped_position):
-        self.board = board
-        self.piece = piece
-        self.target = target
+class EnPassantMove(Move):
+    def __init__(self, piece, target, jumped_position):
+        super().__init__(piece, target)
         self.jumped_position = jumped_position
 
     def __str__(self):
@@ -73,12 +156,15 @@ class EnPassantMove:
     def __eq__(self, other):
         return self.target == other.target and self.piece == other.piece
 
+    def execute(self, board):
+        new_piece = self.piece.__class__(self.target, self.piece.alliance)
+        board.set_piece(self.target, new_piece)
+        board.set_piece(self.coming_from, EmptyPiece())
 
-class EnPassantAttackMove:
-    def __init__(self, board, piece, target, en_passant_move):
-        self.board = board
-        self.piece = piece
-        self.target = target
+
+class EnPassantAttackMove(Move):
+    def __init__(self, piece, target, en_passant_move):
+        super().__init__(piece, target)
         self.attacked_piece = en_passant_move.piece
         self.attacked_piece.position = en_passant_move.target
         self.en_passant_move = en_passant_move
@@ -88,3 +174,21 @@ class EnPassantAttackMove:
 
     def __str__(self):
         return f"(EM: {self.piece.show()} -> {self.attacked_piece.show()})"
+
+    def execute(self, board):
+        from pieces.piece import EmptyPiece
+        from pieces.pawn import Pawn
+
+        board.set_piece(self.target, Pawn(self.target, self.piece.alliance))
+        board.set_piece(self.coming_from, EmptyPiece())
+        board.set_piece(self.attacked_piece.position, EmptyPiece())
+
+    def undo(self, board):
+        from pieces.piece import EmptyPiece
+
+        attacked_piece = self.attacked_piece.__class__(self.attacked_piece.position, self.attacked_piece.alliance)
+        attacking_piece = self.piece.__class__(self.coming_from, self.piece.alliance)
+
+        board.set_piece(self.attacked_piece.position, attacked_piece)
+        board.set_piece(self.coming_from, attacking_piece)
+        board.set_piece(self.target, EmptyPiece())

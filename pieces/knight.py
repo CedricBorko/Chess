@@ -23,11 +23,11 @@ class Knight(Piece):
 
                     piece_on_tile = board.get_piece(possible_target)
                     if isinstance(piece_on_tile, EmptyPiece):
-                        self.legal_moves.append(Move(board, self, possible_target, ))
+                        self.legal_moves.append(Move(self, possible_target, ))
 
                     else:
                         if piece_on_tile.alliance != self.alliance:
-                            self.legal_moves.append(AttackMove(board, self, possible_target, piece_on_tile))
+                            self.legal_moves.append(AttackMove(self, possible_target, piece_on_tile))
 
     def first_column(self, offset):
         return self.position % 8 == 0 and offset in (-17, -10, 6, 15)

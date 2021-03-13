@@ -7,7 +7,7 @@ from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen
 from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton
 
 from board_.board import Board
-from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
+from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove, Move
 from board_.utils import valid_target
 from pieces.bishop import Bishop
 from pieces.king import King
@@ -87,7 +87,8 @@ class MainWindow(QWidget):
         if self.selected_piece is not None and not isinstance(self.selected_piece, EmptyPiece):
             if self.selected_piece.alliance == self.board.current_player.alliance:
                 for move in self.selected_piece.legal_moves:
-                    if isinstance(move, AttackMove) or isinstance(move, EnPassantAttackMove):
+                    if isinstance(move, AttackMove) or isinstance(move, EnPassantAttackMove) \
+                        or (isinstance(move, PromotionMove) and move.attacked_piece is not None):
 
                         qp.setBrush(QBrush(QColor("#FF495A")))
                     else:
@@ -143,12 +144,16 @@ class MainWindow(QWidget):
                                 self.promotion_move = move
 
                             if not self.promoting:
+
+                                if isinstance(move, EnPassantMove):
+                                    if move not in self.board.active_en_passant:
+                                        self.board.active_en_passant.append(move)
+
                                 if isinstance(self.selected_piece, King):
                                     self.board.current_player.king_first_move = False
-                                if isinstance(move, EnPassantMove):
-                                    self.board.active_en_passant.append(move)
 
-                                self.selected_piece.make_move(self.board, move)
+                                move.execute(self.board)
+
                                 self.moves_done.append(move)
                                 self.moves_label.setText('\n'.join(map(str, self.moves_done)))
                                 self.selected_piece = None
@@ -168,10 +173,10 @@ class MainWindow(QWidget):
 
         elif QMouseEvent.button() == Qt.RightButton:
             if len(self.moves_done) > 0 and not (self.check_mate or self.stale_mate):
-                self.board.undo(self.moves_done[-1])
+                move = self.moves_done.pop()
+                move.undo(self.board)
                 self.board.current_player.next_player()
                 self.selected_piece = None
-                self.moves_done.pop()
                 self.board.calculate_legal_moves()
                 self.moves_label.setText('\n'.join(map(str, self.moves_done)))
                 self.update()
@@ -190,7 +195,7 @@ class MainWindow(QWidget):
             self.promoting = False
             self.promotion_view.setVisible(False)
 
-            self.selected_piece.make_move(self.board, self.promotion_move)
+            self.promotion_move.execute(self.board)
             self.moves_label.setText('\n'.join(map(str, self.moves_done)))
             self.selected_piece = None
             self.promotion_move = None
@@ -208,7 +213,7 @@ class MainWindow(QWidget):
         updated_legal_moves = []
         copied_board = copy.deepcopy(self.board)
         for move in self.selected_piece.legal_moves:
-            self.selected_piece.make_move(copied_board, move)
+            move.execute(copied_board)
             if not copied_board.current_player.is_check(copied_board):
                 updated_legal_moves.append(move)
             copied_board = copy.deepcopy(self.board)

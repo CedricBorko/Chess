@@ -1,6 +1,5 @@
-from board_.move import CastleMove, PromotionMove, EnPassantAttackMove, EnPassantMove
 from board_.utils import pos_to_letter_code
-from pieces.alliance import Alliance, get_direction
+from pieces.alliance import Alliance
 
 
 class Piece:
@@ -44,47 +43,11 @@ class Piece:
             if move.target == target:
                 return move
 
-    def make_move(self, board, move):
-        from pieces.rook import Rook
-        from pieces.king import King
-        from pieces.queen import Queen
-        from pieces.pawn import Pawn
-        if isinstance(move, CastleMove):
-            if move.king_side:
-                new_king = King(move.target, self.alliance)
-                new_rook = Rook(new_king.position - 1, self.alliance)
-            else:
-                new_king = King(move.target, self.alliance)
-                new_rook = Rook(new_king.position + 1, self.alliance)
-
-            board.current_player.king = new_king
-            board.set_piece(new_rook.position, new_rook, EmptyPiece(move.target - 1))
-            board.set_piece(new_king.position, new_king, EmptyPiece(self.position))
-            t = new_king.position + (1 if move.king_side else - 2)
-            board.set_piece(t, EmptyPiece(t), EmptyPiece(t))
-
-        elif isinstance(move, PromotionMove):
-            if move.promotion_to is None:
-                move.promotion_to = Queen(move.target, self.alliance)
-            board.set_piece(move.target,
-                            move.promotion_to,
-                            EmptyPiece(move.pawn.position))
-        elif isinstance(move, EnPassantAttackMove):
-            board.set_piece(move.target, Pawn(move.target, move.piece.alliance), EmptyPiece(move.piece.position))
-            board.set_piece(move.attacked_piece.position,
-                            EmptyPiece(move.attacked_piece.position),
-                            move.attacked_piece)
-            board.active_en_passant.remove(move.en_passant_move)
-
-        else:
-            new_piece = self.__class__(move.target, move.piece.alliance)
-            board.set_piece(move.target, new_piece, self)
-
 
 class EmptyPiece(Piece):
     ABBREVIATION = "·"
 
-    def __init__(self, position, alliance=None):
+    def __init__(self, position=None, alliance=None):
         super().__init__(position, alliance)
 
     @staticmethod
