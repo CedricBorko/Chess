@@ -21,12 +21,10 @@ class Board:
         self.white_player = WhitePlayer(self, Alliance.White)
         self.black_player = BlackPlayer(self, Alliance.Black)
 
-        self.active_en_passant = []
         self.moves_done = []
         self.current_player = self.white_player
 
         self.create_standard_board()
-        self.calculate_legal_moves()
 
     def calculate_legal_moves(self):
         for piece in self.current_player.active_pieces(self):
@@ -54,6 +52,8 @@ class Board:
                         Bishop(58, Alliance.White), Queen(59, Alliance.White),
                         King(60, Alliance.White), Bishop(61, Alliance.White),
                         Knight(62, Alliance.White), Rook(63, Alliance.White, original_rook=True)]
+
+        self.calculate_legal_moves()
 
     def __str__(self):
         output = ' '.join([self.get_piece(i).__str__() for i in range(0, 8)]) + " 8" + "\n"

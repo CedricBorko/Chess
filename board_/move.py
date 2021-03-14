@@ -29,12 +29,6 @@ class Move:
         board.set_piece(self.coming_from, new_piece)
         board.set_piece(self.target, EmptyPiece())
 
-        if isinstance(self, EnPassantMove):
-            try:
-                board.active_en_passant.remove(self)
-            except ValueError:
-                pass
-
 
 class AttackMove(Move):
     def __init__(self, piece, target, attacked_piece):

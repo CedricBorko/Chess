@@ -1,4 +1,4 @@
-from board_.utils import valid_target
+from board_.utils import valid_target, on_col
 from board_.move import AttackMove, Move
 from pieces.piece import Piece, EmptyPiece
 
@@ -21,7 +21,8 @@ class Rook(Piece):
             possible_target = self.position
             while valid_target(possible_target):
 
-                if self.first_column(possible_target, offset) or self.eighth_column(possible_target, offset):
+                if self.first_column_exclusion(possible_target, offset) \
+                    or self.eighth_column_exclusion(possible_target, offset):
                     break
 
                 possible_target += offset
@@ -37,9 +38,9 @@ class Rook(Piece):
                         break
 
     @staticmethod
-    def first_column(current_pos, offset):
-        return current_pos % 8 == 0 and offset == -1
+    def first_column_exclusion(current_pos, offset):
+        return on_col(0, current_pos) and offset == -1
 
     @staticmethod
-    def eighth_column(current_pos, offset):
-        return current_pos % 8 == 7 and offset == 1
+    def eighth_column_exclusion(current_pos, offset):
+        return on_col(7, current_pos) and offset == 1
