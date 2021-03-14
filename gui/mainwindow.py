@@ -145,6 +145,11 @@ class MainWidget(QWidget):
                             self.OFFSET + pos2 % 8 * self.TILE_SIZE + self.TILE_SIZE // 2,
                             self.OFFSET + pos2 // 8 * self.TILE_SIZE + self.TILE_SIZE // 2
                             )
+                qp.setBrush(QBrush(QColor("#ffcc00")))
+                qp.setPen(Qt.NoPen)
+                qp.drawRect(self.OFFSET + pos1 % 8 * self.TILE_SIZE,
+                            self.OFFSET + pos1 // 8 * self.TILE_SIZE,
+                            self.TILE_SIZE, self.TILE_SIZE)
 
         qp.setPen(Qt.NoPen)
         for i in range(64):
@@ -224,6 +229,11 @@ class MainWidget(QWidget):
                                     p.setIcon(QIcon(
                                         f"pieces/images/set1/{self.selected_piece.alliance}/{p.objectName()}.png"))
                                     p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
+                                    if self.selected_piece.alliance == "Black":
+                                        p.setStyleSheet("QPushButton{background: white}"
+                                                        "QPushButton:hover{background: #ffcc00; color: black}")
+                                    else:
+                                        p.setStyleSheet("")
                                 self.update()
                                 self.promotion_view.setVisible(True)
                                 self.promoting = True
