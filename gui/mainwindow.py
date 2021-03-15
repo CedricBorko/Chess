@@ -5,7 +5,7 @@ from threading import Thread
 from PySide6.QtCore import Qt, QRect, QSize, QPoint
 from PySide6.QtGui import QPainter, QImage, QFont, QColor, QBrush, QPen, QIcon, QPixmap, QPainterPath
 from PySide6.QtWidgets import QMainWindow, QWidget, QGridLayout, QLabel, QHBoxLayout, QGroupBox, QPushButton, \
-    QSizePolicy
+    QSizePolicy, QScrollArea
 
 from board_.board import Board
 from board_.move import AttackMove, PromotionMove, CastleMove, EnPassantMove, EnPassantAttackMove
@@ -30,7 +30,11 @@ class Window(QMainWindow):
         self.setStyleSheet("QWidget{background: rgb(48, 48, 48); border: none}"
                            "QLabel{color: white; border: none; padding: 10px}"
                            "QPushButton{border: 1px solid white; color: white}"
-                           "QPushButton:hover{background: #ffcc00; color: black}")
+                           "QPushButton:hover{background: #ffcc00; color: black}"
+                           "QScrollBar:vertical{background: rgb(83, 83, 83); width: 5px; border: none}"
+                           "QScrollBar:add-page:vertical{background: rgb(83, 83, 83)}"
+                           "QScrollBar:sub-page:vertical{background: rgb(83, 83, 83)}"
+                           "QScrollBar:handle:vertical{background: #49BF88;}")
 
         self.main_widget = MainWidget(self)
         self.setMinimumSize(900, 600)
@@ -105,6 +109,21 @@ class MainWidget(QWidget):
 
         self.info_widget.layout().addWidget(self.previous_move_button, 1, 0)
         self.info_widget.layout().addWidget(self.next_move_button, 1, 1)
+
+        self.scroll_area_white = QScrollArea(self.moves_widget)
+        self.scroll_area_white.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scroll_area_white.setWidgetResizable(True)
+        self.scroll_area_white.setStyleSheet("QScrollArea{background: rgb(43, 43, 43);"
+                                             "border: 1px solid rgba(83, 83, 83, 0.6)}")
+
+        self.scroll_area_widget = QWidget()
+        self.scroll_area_white.setWidget(self.scroll_area_widget)
+
+        self.scroll_area_widget.setLayout(QGridLayout())
+        self.scroll_area_widget.layout().setContentsMargins(0, 0, 0, 0)
+        self.scroll_area_widget.layout().setAlignment(Qt.AlignTop)
+
+        self.moves_widget.layout().addWidget(self.scroll_area_white, 1, 0, 1, 2)
 
     def paintEvent(self, QPaintEvent):
         qp = QPainter(self)
@@ -261,15 +280,9 @@ class MainWidget(QWidget):
                                 move_label = QLabel(str(len(self.move_labels) + 1) + ". " + move.__str__(),
                                                     self.moves_widget)
                                 move_label.setMaximumHeight(self.OFFSET)
-                                move_label.setFont(QFont("TW Cen Mt", self.height() // 70))
+                                move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
                                 self.move_labels.append(move_label)
-                                self.moves_widget.layout().addWidget(move_label, row, col)
-
-                                for i in range(len(self.move_labels)):
-                                    if len(self.move_labels) - i <= 24:
-                                        self.move_labels[i].show()
-                                    else:
-                                        self.move_labels[i].hide()
+                                self.scroll_area_widget.layout().addWidget(move_label, row, col)
 
                                 self.selected_piece = None
                                 self.board.current_player.next_player()
@@ -319,15 +332,9 @@ class MainWidget(QWidget):
             move_label = QLabel(str(len(self.move_labels) + 1) + ". " + self.promotion_move.__str__(),
                                 self.moves_widget)
             move_label.setMaximumHeight(self.OFFSET)
-            move_label.setFont(QFont("TW Cen Mt", self.height() // 70))
+            move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
             self.move_labels.append(move_label)
-            self.moves_widget.layout().addWidget(move_label, row, col)
-
-            for i in range(len(self.move_labels)):
-                if len(self.move_labels) - i <= 24:
-                    self.move_labels[i].show()
-                else:
-                    self.move_labels[i].hide()
+            self.scroll_area_widget.layout().addWidget(move_label, row, col)
 
             self.promoting = False
             self.promotion_view.setVisible(False)
@@ -361,9 +368,9 @@ class MainWidget(QWidget):
                 move.undo(copied_board)
 
             if isinstance(self.selected_piece, King):
-                for m in self.selected_piece.legal_moves:
-                    if isinstance(m, CastleMove) and self.board.current_player.is_check(self.board):
-                        updated_legal_moves.remove(m)
+                for move in updated_legal_moves:
+                    if isinstance(move, CastleMove) and self.board.current_player.is_check(self.board):
+                        updated_legal_moves.remove(move)
 
             self.selected_piece.legal_moves = updated_legal_moves
 
@@ -381,7 +388,7 @@ class MainWidget(QWidget):
                                         self.TILE_SIZE * 4, self.TILE_SIZE * 4)
         for move_label in self.move_labels:
             move_label.setMaximumHeight(self.OFFSET)
-            move_label.setFont(QFont("TW Cen Mt", self.height() // 70))
+            move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
 
         for p in self.promotions:
             p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
@@ -399,7 +406,6 @@ class MainWidget(QWidget):
             if self.move_index < len(self.board.moves_done):
                 self.move_labels[self.move_index].setStyleSheet("QLabel{background: #ffcc00; color: black}")
 
-
     def previous_move(self):
         if self.stale_mate or self.check_mate:
             if self.move_index > 0:
@@ -412,9 +418,3 @@ class MainWidget(QWidget):
 
             if self.move_index >= 0:
                 self.move_labels[self.move_index].setStyleSheet("QLabel{background: #ffcc00; color: black}")
-
-
-
-class BoardWidget(QWidget):
-    def __init__(self, parent):
-        super().__init__(parent)
