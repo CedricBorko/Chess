@@ -29,12 +29,12 @@ class Window(QMainWindow):
         self.setWindowTitle("Chess")
         self.setStyleSheet("QWidget{background: rgb(48, 48, 48); border: none}"
                            "QLabel{color: white; border: none; padding: 10px}"
-                           "QPushButton{border: 1px solid white; color: white}"
+                           "QPushButton{border: none; color: white}"
                            "QPushButton:hover{background: #ffcc00; color: black}"
                            "QScrollBar:vertical{background: rgb(83, 83, 83); width: 5px; border: none}"
                            "QScrollBar:add-page:vertical{background: rgb(83, 83, 83)}"
                            "QScrollBar:sub-page:vertical{background: rgb(83, 83, 83)}"
-                           "QScrollBar:handle:vertical{background: #49BF88;}")
+                           "QScrollBar:handle:vertical{background: #ffcc00;}")
 
         self.main_widget = MainWidget(self)
         self.setMinimumSize(900, 600)
@@ -68,6 +68,8 @@ class MainWidget(QWidget):
         self.promoting = False
         self.board = Board()
         self.move_index = len(self.board.moves_done)
+        self.board_states = []
+        self.winner = None
 
         self.moves_widget = QWidget(self)
         self.moves_widget.setLayout(QGridLayout())
@@ -79,7 +81,7 @@ class MainWidget(QWidget):
         black_moves.setFont(QFont("TW Cen Mt", 16))
         self.moves_widget.layout().addWidget(white_moves, 0, 0, 1, 1)
         self.moves_widget.layout().addWidget(black_moves, 0, 1, 1, 1)
-        self.move_labels = []
+        self.move_buttons = []
 
         self.info_widget = QWidget(self)
         self.info_widget.setLayout(QGridLayout())
@@ -99,17 +101,6 @@ class MainWidget(QWidget):
             p.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.promotion_view.layout().addWidget(p, i % 2, i // 2)
 
-        self.next_move_button = QPushButton("next move", self)
-        self.next_move_button.clicked.connect(self.next_move)
-        self.next_move_button.setVisible(False)
-
-        self.previous_move_button = QPushButton("previous move", self)
-        self.previous_move_button.clicked.connect(self.previous_move)
-        self.previous_move_button.setVisible(False)
-
-        self.info_widget.layout().addWidget(self.previous_move_button, 1, 0)
-        self.info_widget.layout().addWidget(self.next_move_button, 1, 1)
-
         self.scroll_area_white = QScrollArea(self.moves_widget)
         self.scroll_area_white.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll_area_white.setWidgetResizable(True)
@@ -120,7 +111,6 @@ class MainWidget(QWidget):
         self.scroll_area_white.setWidget(self.scroll_area_widget)
 
         self.scroll_area_widget.setLayout(QGridLayout())
-        self.scroll_area_widget.layout().setContentsMargins(0, 0, 0, 0)
         self.scroll_area_widget.layout().setAlignment(Qt.AlignTop)
 
         self.moves_widget.layout().addWidget(self.scroll_area_white, 1, 0, 1, 2)
@@ -163,7 +153,7 @@ class MainWidget(QWidget):
 
         if self.check_mate or self.stale_mate:
 
-            if 0 <= self.move_index <= len(self.move_labels) - 1:
+            if 0 <= self.move_index < len(self.move_buttons) - 1:
                 qp.setPen(QPen(QColor("#ffcc00"), 10, Qt.DotLine))
                 pos1 = self.board.moves_done[self.move_index].coming_from
                 pos2 = self.board.moves_done[self.move_index].target
@@ -215,12 +205,13 @@ class MainWidget(QWidget):
         qp.setPen(QPen(Qt.white))
         qp.setFont(QFont("TW Cen Mt", 16))
 
-        if self.check_mate:
-            qp.drawText(QRect(self.OFFSET, 0, self.TILE_SIZE * 8, self.OFFSET), Qt.AlignCenter,
-                        "Checkmate " + self.board.current_player.opponent().__str__() + " wins!")
+        if self.winner is not None:
+            if self.check_mate:
+                qp.drawText(QRect(self.OFFSET, 0, self.TILE_SIZE * 8, self.OFFSET), Qt.AlignCenter,
+                            "Checkmate " + self.winner.__str__() + " wins!")
 
-        if self.stale_mate:
-            qp.drawText(QRect(self.OFFSET, 0, self.TILE_SIZE * 8, self.OFFSET), Qt.AlignCenter, "Tie!")
+            if self.stale_mate:
+                qp.drawText(QRect(self.OFFSET, 0, self.TILE_SIZE * 8, self.OFFSET), Qt.AlignCenter, "Tie!")
 
     def mousePressEvent(self, QMouseEvent):
         if QMouseEvent.button() == Qt.LeftButton:
@@ -271,18 +262,11 @@ class MainWidget(QWidget):
                                 if isinstance(self.selected_piece, King):
                                     self.board.current_player.king_first_move = False
 
-                                move.execute(self.board)
-
+                                self.board_states.append(copy.deepcopy(self.board))
                                 self.board.moves_done.append(move)
                                 self.board.current_player.moves_done.append(move)
-                                col = 0 if self.selected_piece.alliance == "White" else 1
-                                row = len(self.board.current_player.moves_done)
-                                move_label = QLabel(str(len(self.move_labels) + 1) + ". " + move.__str__(),
-                                                    self.moves_widget)
-                                move_label.setMaximumHeight(self.OFFSET)
-                                move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
-                                self.move_labels.append(move_label)
-                                self.scroll_area_widget.layout().addWidget(move_label, row, col)
+                                self.add_move_button(move)
+                                move.execute(self.board)
 
                                 self.selected_piece = None
                                 self.board.current_player.next_player()
@@ -295,9 +279,11 @@ class MainWidget(QWidget):
                                     self.stale_mate = not in_check and not has_moves
 
                                 if self.check_mate or self.stale_mate:
-                                    self.move_index = len(self.board.moves_done)
-                                    self.next_move_button.setVisible(True)
-                                    self.previous_move_button.setVisible(True)
+                                    self.move_index = len(self.move_buttons)
+                                    self.winner = self.board.current_player.opponent()
+                                    self.selected_piece = self.board.current_player.active_pieces(self.board)[0]
+                                    self.board_states.append(copy.deepcopy(self.board))
+                                    self.add_move_button()
 
                                 self.update()
                         else:
@@ -305,15 +291,6 @@ class MainWidget(QWidget):
                             if not isinstance(piece, EmptyPiece):
                                 self.selected_piece = piece
                                 self.update()
-
-        """elif QMouseEvent.button() == Qt.RightButton:
-            if len(self.board.moves_done) > 0 and not (self.check_mate or self.stale_mate):
-                move = self.board.moves_done.pop()
-                move.undo(self.board)
-                self.board.current_player.next_player()
-                self.board.current_player.moves_done.remove(move)
-                self.selected_piece = None
-                self.update()"""
 
     def choose_promotion(self):
         if self.promotion_move is not None:
@@ -327,14 +304,9 @@ class MainWidget(QWidget):
             self.promotion_move.promotion_to = piece
             self.board.moves_done.append(self.promotion_move)
             self.board.current_player.moves_done.append(self.promotion_move)
-            col = 0 if self.selected_piece.alliance == "White" else 1
-            row = len(self.board.current_player.moves_done)
-            move_label = QLabel(str(len(self.move_labels) + 1) + ". " + self.promotion_move.__str__(),
-                                self.moves_widget)
-            move_label.setMaximumHeight(self.OFFSET)
-            move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
-            self.move_labels.append(move_label)
-            self.scroll_area_widget.layout().addWidget(move_label, row, col)
+            self.board_states.append(copy.deepcopy(self.board))
+
+            self.add_move_button(self.promotion_move)
 
             self.promoting = False
             self.promotion_view.setVisible(False)
@@ -352,9 +324,12 @@ class MainWidget(QWidget):
                 self.stale_mate = not in_check and not has_moves
 
             if self.check_mate or self.stale_mate:
-                self.move_index = len(self.board.moves_done)
-                self.next_move_button.setVisible(True)
-                self.previous_move_button.setVisible(True)
+                self.move_index = len(self.move_buttons)
+                self.winner = self.board.current_player.opponent()
+                self.selected_piece = self.board.current_player.active_pieces(self.board)[0]
+                self.board_states.append(copy.deepcopy(self.board))
+                self.add_move_button()
+
             self.update()
 
     def update_legal_moves(self):
@@ -381,40 +356,53 @@ class MainWidget(QWidget):
                                      self.width() - 8 * self.TILE_SIZE - self.OFFSET * 3,
                                      self.TILE_SIZE * 8)
 
-        self.next_move_button.setMinimumHeight(self.OFFSET)
-        self.previous_move_button.setMinimumHeight(self.OFFSET)
-
         self.promotion_view.setGeometry(self.OFFSET + self.TILE_SIZE * 2, self.OFFSET + self.TILE_SIZE * 2,
                                         self.TILE_SIZE * 4, self.TILE_SIZE * 4)
-        for move_label in self.move_labels:
+        for move_label in self.move_buttons:
             move_label.setMaximumHeight(self.OFFSET)
             move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
 
         for p in self.promotions:
             p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
 
-    def next_move(self):
+    def add_move_button(self, move=None):
+        col = 0 if self.selected_piece.alliance == "White" else 1
+        row = len(self.board.current_player.moves_done)
+        if move is not None:
+            move_button = MoveButton(self, len(self.board.moves_done),
+                                     str(len(self.move_buttons) + 1) + ". " + move.__str__())
+            move_button.setMaximumHeight(self.OFFSET)
+            move_button.setFont(QFont("TW Cen Mt", self.height() // 60))
+            self.move_buttons.append(move_button)
+            self.scroll_area_widget.layout().addWidget(move_button, row, col, 1, 1)
+        else:
+            row += 2
+            move_button = MoveButton(self, len(self.board.moves_done) + 1, "Checkmate")
+            move_button.setMaximumHeight(self.OFFSET)
+            move_button.setFont(QFont("TW Cen Mt", self.height() // 60))
+            self.move_buttons.append(move_button)
+            self.scroll_area_widget.layout().addWidget(move_button, row, 0, 2, 2)
+
+        self.selected_piece = None
+
+    def set_board_state(self):
         if self.stale_mate or self.check_mate:
-            if self.move_index < len(self.board.moves_done):
-                self.board.moves_done[self.move_index].execute(self.board)
-                self.update()
-                self.move_index += 1
+            index = self.sender().index - 1
+            self.board.pieces = self.board_states[index].pieces
+            self.move_index = index
+            self.update()
+            for b in self.move_buttons:
+                b.setStyleSheet("QPushButton{border: none; color: white}"
+                                "QPushButton:hover{background: #ffcc00; color: black}")
+            self.move_buttons[index].setStyleSheet("QPushButton{background: #ffcc00; color: black}")
 
-            for label in self.move_labels:
-                label.setStyleSheet("")
 
-            if self.move_index < len(self.board.moves_done):
-                self.move_labels[self.move_index].setStyleSheet("QLabel{background: #ffcc00; color: black}")
+class MoveButton(QPushButton):
+    def __init__(self, parent, index, move):
+        super().__init__(parent)
+        self.index = index
+        self.move = move
 
-    def previous_move(self):
-        if self.stale_mate or self.check_mate:
-            if self.move_index > 0:
-                self.move_index -= 1
-                self.board.moves_done[self.move_index].undo(self.board)
-                self.update()
-
-            for label in self.move_labels:
-                label.setStyleSheet("")
-
-            if self.move_index >= 0:
-                self.move_labels[self.move_index].setStyleSheet("QLabel{background: #ffcc00; color: black}")
+        self.setParent(parent)
+        self.clicked.connect(self.parent().set_board_state)
+        self.setText(self.move)

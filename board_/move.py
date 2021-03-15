@@ -10,10 +10,10 @@ class Move:
         self.coming_from = copy.deepcopy(self.piece.position)
 
     def __str__(self):
-        return f"{self.piece.show()} ➜ {pos_to_letter_code(self.target)}"
+        return f"{self.piece.show()}, {pos_to_letter_code(self.target)}"
 
     def __repr__(self):
-        return f"{self.piece.show()} ➜ {pos_to_letter_code(self.target)}"
+        return f"{self.piece.show()}, {pos_to_letter_code(self.target)}"
 
     def execute(self, board):
         new_piece = self.piece.__class__(self.target, self.piece.alliance)
@@ -36,10 +36,10 @@ class AttackMove(Move):
         self.attacked_piece = attacked_piece
 
     def __repr__(self):
-        return f"{self.piece.show()} ➜ {self.attacked_piece.show()}"
+        return f"{self.piece.show()}, {self.attacked_piece.show()}"
 
     def __str__(self):
-        return f"{self.piece.show()} ➜ {self.attacked_piece.show()}"
+        return f"{self.piece.show()}, {self.attacked_piece.show()}"
 
     def execute(self, board):
         from pieces.piece import EmptyPiece
@@ -106,10 +106,10 @@ class PromotionMove(Move):
         self.promotion_to = None
 
     def __repr__(self):
-        return f"{self.piece.show()} ➜ {self.promotion_to.show()}"
+        return f"{self.piece.show()}, {self.promotion_to.show()}"
 
     def __str__(self):
-        return f"{self.piece.show()} ➜ {self.promotion_to.show()}"
+        return f"{self.piece.show()}, {self.promotion_to.show()}"
 
     def execute(self, board):
         from pieces.piece import EmptyPiece
@@ -155,10 +155,10 @@ class EnPassantAttackMove(Move):
         self.en_passant_move = en_passant_move
 
     def __repr__(self):
-        return f"{self.piece.show()} ➜ {self.attacked_piece.show()}"
+        return f"{self.piece.show()}, {self.attacked_piece.show()}"
 
     def __str__(self):
-        return f"{self.piece.show()} ➜ {self.attacked_piece.show()}"
+        return f"{self.piece.show()}, {self.attacked_piece.show()}"
 
     def execute(self, board):
         from pieces.piece import EmptyPiece

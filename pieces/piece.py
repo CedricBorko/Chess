@@ -19,7 +19,7 @@ class Piece:
         return self.ABBREVIATION if self.alliance == Alliance.White else self.ABBREVIATION.lower()
 
     def show(self):
-        return f"{self.ABBREVIATION}{pos_to_letter_code(self.position)}"
+        return f"{self.ABBREVIATION} {pos_to_letter_code(self.position)}"
 
     def is_black(self):
         return self.alliance == Alliance.Black
