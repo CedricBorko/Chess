@@ -116,6 +116,7 @@ class MainWidget(QWidget):
         self.moves_widget.layout().addWidget(self.scroll_area, 1, 0, 1, 2)
 
         self.restart_button = QPushButton("Restart", self)
+        self.restart_button.setFont(QFont("TW Cen Mt", 16))
         self.restart_button.hide()
         self.moves_widget.layout().addWidget(self.restart_button, 2, 0, 1, 2)
         self.restart_button.clicked.connect(self.restart)
