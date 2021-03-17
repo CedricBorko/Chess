@@ -101,19 +101,24 @@ class MainWidget(QWidget):
             p.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             self.promotion_view.layout().addWidget(p, i % 2, i // 2)
 
-        self.scroll_area_white = QScrollArea(self.moves_widget)
-        self.scroll_area_white.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll_area_white.setWidgetResizable(True)
-        self.scroll_area_white.setStyleSheet("QScrollArea{background: rgb(43, 43, 43);"
+        self.scroll_area = QScrollArea(self.moves_widget)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("QScrollArea{background: rgb(43, 43, 43);"
                                              "border: 1px solid rgba(83, 83, 83, 0.6)}")
 
         self.scroll_area_widget = QWidget()
-        self.scroll_area_white.setWidget(self.scroll_area_widget)
+        self.scroll_area.setWidget(self.scroll_area_widget)
 
         self.scroll_area_widget.setLayout(QGridLayout())
         self.scroll_area_widget.layout().setAlignment(Qt.AlignTop)
 
-        self.moves_widget.layout().addWidget(self.scroll_area_white, 1, 0, 1, 2)
+        self.moves_widget.layout().addWidget(self.scroll_area, 1, 0, 1, 2)
+
+        self.restart_button = QPushButton("Restart", self)
+        self.restart_button.hide()
+        self.moves_widget.layout().addWidget(self.restart_button, 2, 0, 1, 2)
+        self.restart_button.clicked.connect(self.restart)
 
     def paintEvent(self, QPaintEvent):
         qp = QPainter(self)
@@ -284,6 +289,7 @@ class MainWidget(QWidget):
                                     self.selected_piece = self.board.current_player.active_pieces(self.board)[0]
                                     self.board_states.append(copy.deepcopy(self.board))
                                     self.add_move_button()
+                                    self.restart_button.show()
 
                                 self.update()
                         else:
@@ -329,6 +335,7 @@ class MainWidget(QWidget):
                 self.selected_piece = self.board.current_player.active_pieces(self.board)[0]
                 self.board_states.append(copy.deepcopy(self.board))
                 self.add_move_button()
+                self.restart_button.show()
 
             self.update()
 
@@ -358,6 +365,7 @@ class MainWidget(QWidget):
 
         self.promotion_view.setGeometry(self.OFFSET + self.TILE_SIZE * 2, self.OFFSET + self.TILE_SIZE * 2,
                                         self.TILE_SIZE * 4, self.TILE_SIZE * 4)
+        self.restart_button.setMinimumHeight(self.OFFSET)
         for move_label in self.move_buttons:
             move_label.setMaximumHeight(self.OFFSET)
             move_label.setFont(QFont("TW Cen Mt", self.height() // 60))
@@ -395,6 +403,23 @@ class MainWidget(QWidget):
                 b.setStyleSheet("QPushButton{border: none; color: white}"
                                 "QPushButton:hover{background: #ffcc00; color: black}")
             self.move_buttons[index].setStyleSheet("QPushButton{background: #ffcc00; color: black}")
+
+    def restart(self):
+        self.selected_piece = None
+        self.stale_mate = self.check_mate = False
+        self.promotion_move = None
+        self.promoting = False
+        self.board = Board()
+        self.move_index = len(self.board.moves_done)
+        self.board_states = []
+        self.winner = None
+        for b in self.move_buttons:
+            b.setVisible(False)
+            del b
+
+        self.move_buttons = []
+        self.restart_button.hide()
+        self.update()
 
 
 class MoveButton(QPushButton):
