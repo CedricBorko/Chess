@@ -1,7 +1,7 @@
 import copy
 
-from board_.move import AttackMove, PromotionMove
-from pieces.king import King
+from chess.engine.move import AttackMove, PromotionMove
+from chess.engine.pieces import King
 
 
 class Player:
