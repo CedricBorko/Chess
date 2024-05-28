@@ -10,19 +10,22 @@ from chess.engine.pieces.piece import Piece
 
 
 class Queen(Piece):
+
+    OFFSETS: set[int] = {-9, -8, -7, -1, 1, 7, 8, 9}
+
     def __init__(self, position: int, alliance: Alliance) -> None:
         super().__init__(position, alliance)
 
     def calculate_legal_moves(self, board: Board):
         from chess.engine.board import is_valid_position
 
-        self.legal_moves = []
-        offsets = {-9, -8, -7, -1, 1, 7, 8, 9}
+        self.legal_moves.clear()
 
-        for offset in offsets:
+        for offset in self.OFFSETS:
             possible_target = self.position
             while is_valid_position(possible_target):
-                if is_restricted_move(possible_target, offset): break
+                if is_restricted_move(possible_target, offset):
+                    break
 
                 possible_target += offset
 
@@ -31,14 +34,15 @@ class Queen(Piece):
 
                 piece_on_tile = board.state[possible_target]
                 if piece_on_tile is None:
-                    self.legal_moves.append(Move(self, possible_target))
+                    self.legal_moves.add(Move(self, possible_target))
                     continue
 
-
-                elif piece_on_tile.alliance != self.alliance:
-                    self.legal_moves.append(AttackMove(self, possible_target, piece_on_tile))
-
-                break
+                else:
+                    if piece_on_tile.alliance != self.alliance:
+                        self.legal_moves.add(
+                            AttackMove(self, possible_target, piece_on_tile)
+                        )
+                        break
 
 
 def is_first_column_exclusion(position: int, offset: int) -> bool:
@@ -50,4 +54,6 @@ def is_eighth_column_exclusion(position: int, offset: int) -> bool:
 
 
 def is_restricted_move(positon: int, offset: int) -> bool:
-    return is_first_column_exclusion(positon, offset) or is_eighth_column_exclusion(positon, offset)
+    return is_first_column_exclusion(positon, offset) or is_eighth_column_exclusion(
+        positon, offset
+    )

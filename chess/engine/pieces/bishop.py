@@ -34,12 +34,12 @@ class Bishop(Piece):
 
                     if piece_on_tile is None:
                         self.legal_moves.add(Move(self, possible_target))
+                    else:
+                        if piece_on_tile.alliance != self.alliance:
+                            self.legal_moves.add(
+                                AttackMove(self, possible_target, piece_on_tile)
+                            )
                         break
-
-                    if piece_on_tile.alliance != self.alliance:
-                        self.legal_moves.add(AttackMove(self, possible_target, piece_on_tile))
-
-                    break
 
         return self.legal_moves
 
@@ -53,4 +53,6 @@ def is_eighth_column_exclusion(position: int, offset: int) -> bool:
 
 
 def is_restricted_move(positon: int, offset: int) -> bool:
-    return is_first_column_exclusion(positon, offset) or is_eighth_column_exclusion(positon, offset)
+    return is_first_column_exclusion(positon, offset) or is_eighth_column_exclusion(
+        positon, offset
+    )

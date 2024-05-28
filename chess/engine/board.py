@@ -9,11 +9,7 @@ PIECE_ABBREVIATIONS = "kqrbnpKQRBNP"
 
 LETTERS = "abcdefgh"
 
-COORDINATES = [
-    f"{letter}{index}"
-    for index in range(8, 0, -1)
-    for letter in LETTERS
-]
+COORDINATES = [f"{letter}{index}" for index in range(8, 0, -1) for letter in LETTERS]
 
 
 class Board:
@@ -30,18 +26,25 @@ class Board:
         self.white_pieces = set()
         self.black_pieces = set()
 
+        self.white_king = None
+        self.black_king = None
+
         self.parse_fen(fen_string)
 
     def __repr__(self) -> str:
-        return '\n'.join(
-            row for row in [
-                ''.join(str(piece) for piece in self.get_pieces_in_row(i))
+        return "\n".join(
+            row
+            for row in [
+                "".join(
+                    str(piece) if piece is not None else "."
+                    for piece in self.get_pieces_in_row(i)
+                )
                 for i in range(8)
             ]
         )
 
     def get_pieces_in_row(self, row_index: int) -> list[Piece]:
-        return self.state[row_index * 8:8 + row_index * 8]
+        return self.state[row_index * 8 : 8 + row_index * 8]
 
     def get_pieces_in_column(self, column_index: int) -> list[Piece]:
         return self.state[column_index:64:8]
@@ -60,10 +63,16 @@ class Board:
                 else:
                     piece = Piece.from_abbreviation(row_index * 8 + column, character)
 
-                    if piece.alliance == Alliance.WHITE:
+                    if piece.is_white():
                         self.white_pieces.add(piece)
                     else:
                         self.black_pieces.add(piece)
+
+                    if isinstance(piece, King) and piece.is_white():
+                        self.white_king = piece
+
+                    if isinstance(piece, King) and piece.is_black():
+                        self.black_king = piece
 
                     self.state[piece.position] = piece
                     column += 1
@@ -73,6 +82,12 @@ class Board:
         self.en_passant_target_square = fen_parts[3]
         self.halfmove_clock = int(fen_parts[4])
         self.fullmove_number = int(fen_parts[5])
+
+        for piece in self.all_active_pieces():
+            piece.calculate_legal_moves(self)
+
+        if self.white_king is None or self.black_king is None:
+            raise ValueError("Invalid board state.")
 
     def to_fen(self) -> str:
         """
@@ -122,19 +137,36 @@ class Board:
         return self.state[position]
 
     def get_available_pieces(self, alliance: Alliance) -> set[Piece]:
-        if alliance == Alliance.WHITE: return self.white_pieces
+        if alliance == Alliance.WHITE:
+            return self.white_pieces
         return self.black_pieces
 
     def all_active_pieces(self) -> set[Piece]:
-        return self.get_available_pieces(Alliance.WHITE).union(self.get_available_pieces(Alliance.BLACK))
+        return self.get_available_pieces(Alliance.WHITE).union(
+            self.get_available_pieces(Alliance.BLACK)
+        )
 
     def next_turn(self) -> None:
-        self.active_player = Alliance.WHITE if self.active_player == Alliance.BLACK else Alliance.WHITE
+        self.active_player = (
+            Alliance.WHITE if self.active_player == Alliance.BLACK else Alliance.WHITE
+        )
         self.halfmove_clock += 1
         self.fullmove_number += 0.5
 
         for piece in self.get_available_pieces(self.active_player):
             piece.calculate_legal_moves(self)
+
+    def is_checked(self, alliance: Alliance) -> bool:
+
+        king = self.white_king if alliance == Alliance.WHITE else self.black_king
+        pieces = self.get_available_pieces(alliance.opponent())
+
+        for piece in pieces:
+            for move in piece.legal_moves:
+                if move.target == king.position:
+                    return True
+
+        return False
 
 
 def is_valid_position(position: int) -> bool:
@@ -148,7 +180,8 @@ def position_to_coordinate(position: int) -> str:
 def coordinate_to_position(coordinate: str) -> int:
     letter, index, *_ = coordinate
 
-    if int(index) < 1 or letter not in LETTERS: raise IndexError("Out of bounds.")
+    if int(index) < 1 or letter not in LETTERS:
+        raise IndexError("Out of bounds.")
     y = 8 - int(index)
     return y * 8 + (ord(letter) - ord("a"))
 
@@ -159,5 +192,5 @@ def main() -> None:
     print(board)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

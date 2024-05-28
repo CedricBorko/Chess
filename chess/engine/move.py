@@ -15,12 +15,10 @@ class Move:
         self.target = target
 
     def __str__(self):
-        from chess.engine.board import position_to_coordinate
-
-        return f"{self.moving_piece.show()}, {position_to_coordinate(self.target)}"
+        return f"M: {self.moving_piece.abbreviation} -> {self.target}"
 
     def __repr__(self):
-        return f"{self.moving_piece.show()}, {position_to_coordinate(self.target)}"
+        return f"M: {self.moving_piece.abbreviation} -> {self.target}"
 
     def execute(self, board: Board):
         board.set_piece_at(self.target, self.moving_piece)
@@ -40,12 +38,12 @@ class AttackMove(Move):
         super().__init__(moving_piece, target)
         self.attacked_piece = attacked_piece
 
-    def __repr__(self):
-        return f"{self.moving_piece.show()}, {self.attacked_piece.show()}"
-
     def __str__(self):
-        return f"{self.moving_piece.show()}, {self.attacked_piece.show()}"
+        return f"A: {self.moving_piece.abbreviation} -> {self.target}"
 
+    def __repr__(self):
+        return f"A: {self.moving_piece.abbreviation} -> {self.target}"
+    
     def execute(self, board):
         from chess.engine.pieces.piece import NullPiece
 
@@ -55,15 +53,19 @@ class AttackMove(Move):
         board.set_piece(self.origin, NullPiece())
 
     def undo(self, board):
-        moved_piece = self.moving_piece.__class__(self.origin, self.moving_piece.alliance)
-        attacked_piece = self.attacked_piece.__class__(self.target, self.attacked_piece.alliance)
+        moved_piece = self.moving_piece.__class__(
+            self.origin, self.moving_piece.alliance
+        )
+        attacked_piece = self.attacked_piece.__class__(
+            self.target, self.attacked_piece.alliance
+        )
 
         board.set_piece(self.origin, moved_piece)
         board.set_piece(self.target, attacked_piece)
 
 
 class CastleMove(Move):
-    def __init__(self, moving_piece, target, king_side = True):
+    def __init__(self, moving_piece, target, king_side=True):
         super().__init__(moving_piece, target)
         self.king_side = king_side
 
@@ -82,13 +84,17 @@ class CastleMove(Move):
         board.set_piece_at(new_rook.position, new_rook)
         board.set_piece_at(new_king.position, new_king)
         board.set_piece_at(self.origin, NullPiece())
-        board.set_piece_at(self.target + (1 if self.king_side else - 2), NullPiece())
+        board.set_piece_at(self.target + (1 if self.king_side else -2), NullPiece())
 
     def undo(self, board):
         from chess.engine.pieces.rook import Rook
 
         king = self.moving_piece.__class__(self.origin, self.moving_piece.alliance)
-        rook = Rook(self.origin + (3 if self.king_side else -4), self.moving_piece.alliance, original_rook=True)
+        rook = Rook(
+            self.origin + (3 if self.king_side else -4),
+            self.moving_piece.alliance,
+            original_rook=True,
+        )
 
         if self.king_side:
             board.set_piece(self.origin, king)
@@ -104,7 +110,7 @@ class CastleMove(Move):
 
 
 class PromotionMove(Move):
-    def __init__(self, moving_piece, target, attacked_piece = None):
+    def __init__(self, moving_piece, target, attacked_piece=None):
         super().__init__(moving_piece, target)
         self.attacked_piece = attacked_piece
         self.promotion_to = None
@@ -127,12 +133,16 @@ class PromotionMove(Move):
 
     def undo(self, board):
         if self.attacked_piece is not None:
-            attacked_piece = self.attacked_piece.__class__(self.target, self.attacked_piece.alliance)
+            attacked_piece = self.attacked_piece.__class__(
+                self.target, self.attacked_piece.alliance
+            )
             board.set_piece(self.target, attacked_piece)
         else:
             board.set_piece(self.target, NullPiece())
 
-        moving_piece = self.moving_piece.__class__(self.origin, self.moving_piece.alliance)
+        moving_piece = self.moving_piece.__class__(
+            self.origin, self.moving_piece.alliance
+        )
         board.set_piece(self.origin, moving_piece)
 
 
@@ -169,8 +179,12 @@ class EnPassantAttackMove(Move):
     def undo(self, board):
         from chess.engine.pieces.piece import NullPiece
 
-        attacked_piece = self.attacked_piece.__class__(self.attacked_piece.position, self.attacked_piece.alliance)
-        attacking_piece = self.moving_piece.__class__(self.origin, self.moving_piece.alliance)
+        attacked_piece = self.attacked_piece.__class__(
+            self.attacked_piece.position, self.attacked_piece.alliance
+        )
+        attacking_piece = self.moving_piece.__class__(
+            self.origin, self.moving_piece.alliance
+        )
 
         board.set_piece(self.attacked_piece.position, attacked_piece)
         board.set_piece(self.origin, attacking_piece)
