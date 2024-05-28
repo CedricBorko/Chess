@@ -54,7 +54,7 @@ class Pawn(Piece):
                         self.legal_moves.add(PawnJumpMove(self, possible_target, position_in_between))
 
                 # Attack and En passant move right
-                elif False and offset in (7, 9):
+                elif offset in (7, 9):
                     if offset == 7 and (self.position % 8 == 7 and self.is_white() or
                                         self.position % 8 == 0 and self.is_black()):
                         continue
@@ -64,26 +64,23 @@ class Pawn(Piece):
                         continue
 
                     piece = board.state[possible_target]
+                    last_move = board.get_last_move()
 
-                    try:
-                        en_passant_move = board.current_player.opponent().moves_done[-1]
-                    except IndexError:
-                        en_passant_move = None
-
-                    if isinstance(piece, NullPiece):
-                        if isinstance(en_passant_move, PawnJumpMove):
-                            if en_passant_move.jumped_position == possible_target \
-                                and en_passant_move.moving_piece.alliance != self.alliance:
-                                self.legal_moves.append(EnPassantAttackMove(self, possible_target, en_passant_move))
+                    if (
+                        isinstance(last_move, PawnJumpMove) and
+                        last_move.jumped_position == possible_target and
+                        last_move.moving_piece.alliance != self.alliance
+                    ):
+                        self.legal_moves.add(EnPassantAttackMove(self, possible_target, last_move))
 
                     else:
-                        if self.alliance != piece.alliance:
-                            if self.position % 8 == 1 and self.alliance == "White":
-                                self.legal_moves.append(PromotionMove(self, possible_target, piece))
-                            elif self.position % 8 == 6 and self.alliance == "Black":
-                                self.legal_moves.append(PromotionMove(self, possible_target, piece))
+                        if piece is not None and self.alliance != piece.alliance:
+                            if self.position // 8 == 1 and self.is_white():
+                                self.legal_moves.add(PromotionMove(self, possible_target, piece))
+                            elif self.position // 8 == 6 and self.is_black():
+                                self.legal_moves.add(PromotionMove(self, possible_target, piece))
                             else:
-                                self.legal_moves.append(AttackMove(self, possible_target, piece))
+                                self.legal_moves.add(AttackMove(self, possible_target, piece))
 
         return self.legal_moves
 

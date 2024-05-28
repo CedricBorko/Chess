@@ -32,7 +32,6 @@ class King(Piece):
 
                 # CASTLE
                 if not any((castle_availability := self.can_castle(board))): continue
-
                 if (
                     offset == KING_SIDE_CASTLE and
                     castle_availability[0] and
@@ -48,7 +47,7 @@ class King(Piece):
                             CastleMove(
                                 self,
                                 possible_rook.position - 1,
-                                king_side=True
+                                is_king_side=True
                             )
                         )
 
@@ -67,7 +66,7 @@ class King(Piece):
                             CastleMove(
                                 self,
                                 possible_rook.position + 2,
-                                king_side=False
+                                is_king_side=False
                             )
                         )
 
@@ -105,13 +104,13 @@ class King(Piece):
             )
         )
 
-
         if not path_is_clear: return False
 
         for piece in board.get_available_pieces(board.active_player.opponent()):
             for move in piece.legal_moves:
                 if move.target in [self.position + offset for offset in offsets]:
                     return False
+
         return True
 
     def can_castle(self, board: Board) -> tuple[bool, bool]:

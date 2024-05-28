@@ -10,7 +10,6 @@ from chess.engine.pieces.piece import Piece
 
 
 class Queen(Piece):
-
     OFFSETS: set[int] = {-9, -8, -7, -1, 1, 7, 8, 9}
 
     def __init__(self, position: int, alliance: Alliance) -> None:
@@ -42,7 +41,7 @@ class Queen(Piece):
                         self.legal_moves.add(
                             AttackMove(self, possible_target, piece_on_tile)
                         )
-                        break
+                    break
 
 
 def is_first_column_exclusion(position: int, offset: int) -> bool:

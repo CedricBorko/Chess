@@ -196,13 +196,18 @@ class BoardView(QWidget):
         self.restart_button.clicked.connect(self.restart)
 
     def on_promote(self) -> None:
-        piece = self.dialog.options_group.checkedButton().text()
-        return {
+        piece_name = self.dialog.options_group.checkedButton().text()
+        if self.promotion_move is None: return
+
+        self.promotion_move.piece_to_promote = {
             "Queen" : Queen(self.promotion_move.target, self.selected_piece.alliance),
             "Knight": Knight(self.promotion_move.target, self.selected_piece.alliance),
             "Bishop": Bishop(self.promotion_move.target, self.selected_piece.alliance),
             "Rook"  : Rook(self.promotion_move.target, self.selected_piece.alliance)
-        }[piece]
+        }[piece_name]
+
+        self.promotion_move.execute(self.board)
+        self.promotion_move = None
 
     def draw_tiles(self, painter: QPainter) -> None:
         for i in range(64):
@@ -287,7 +292,7 @@ class BoardView(QWidget):
                 )
 
     def draw_legal_moves(self, painter: QPainter) -> None:
-        if False and self.selected_piece.alliance != self.board.active_player:
+        if self.selected_piece.alliance != self.board.active_player:
             return
 
         for move in self.selected_piece.legal_moves:
@@ -371,6 +376,8 @@ class BoardView(QWidget):
 
     def mousePressEvent(self, event: QMouseEvent):
         if event.button() != Qt.MouseButton.LeftButton:
+            self.board.undo()
+            self.update()
             return super().mousePressEvent(event)
 
         if self.check_mate or self.stale_mate:
@@ -399,58 +406,42 @@ class BoardView(QWidget):
 
             move = self.selected_piece.get_move(position)
 
+            if isinstance(move, PromotionMove):
+                self.promotion_move = move
+                self.dialog.promote(position_to_coordinate(move.target))
+                self.board.moves.append(move)
+
+                self.selected_piece = None
+                self.board.next_turn()
+
+                self.update()
+                return super().mousePressEvent(event)
+
             if move is not None and self.board.active_player == self.selected_piece.alliance:
-                if isinstance(move, PromotionMove) and not self.promoting:
-                    for p in self.promotions:
-                        p.setIcon(
-                            QIcon(
-                                f"pieces/images/set1/{self.selected_piece.alliance}/{p.objectName()}.png"
-                            )
-                        )
-                        p.setIconSize(QSize(self.TILE_SIZE, self.TILE_SIZE))
-                        if self.selected_piece.alliance == "Black":
-                            p.setStyleSheet(
-                                "QPushButton{background: white}"
-                                "QPushButton:hover{background: #ffcc00; color: black}"
-                            )
-                        else:
-                            p.setStyleSheet("")
-                    self.update()
+                self.board_states.append(copy.deepcopy(self.board))
+                self.board.moves.append(move)
+                move.execute(self.board)
 
-                    self.dialog.promote(position_to_coordinate(move.target))
+                self.selected_piece = None
+                self.board.next_turn()
 
-                    # self.promotion_view.setVisible(True)
-                    self.promoting = True
-                    self.promotion_move = move
+                # in_check = self.board.active_player.is_check(self.board)
+                # has_moves = len(self.board.current_player.get_possible_moves()) > 0
 
-                if not self.promoting:
-                    self.selected_piece.has_moved = True
+                # if self.board.current_player.is_check(self.board):
+                #     self.check_mate = in_check and not has_moves
+                # else:
+                #     self.stale_mate = not in_check and not has_moves
+                #
+                # if self.check_mate or self.stale_mate:
+                #     self.move_index = len(self.move_buttons)
+                #     self.winner = self.board.current_player.opponent()
+                #     self.selected_piece = self.board.current_player.active_pieces(self.board)[0]
+                #     self.board_states.append(copy.deepcopy(self.board))
+                #     self.add_move_button()
+                #     self.restart_button.show()
 
-                    self.board_states.append(copy.deepcopy(self.board))
-                    self.board.moves.append(move)
-                    self.add_move_button(move)
-                    move.execute(self.board)
-
-                    self.selected_piece = None
-                    self.board.next_turn()
-
-                    # in_check = self.board.active_player.is_check(self.board)
-                    # has_moves = len(self.board.current_player.get_possible_moves()) > 0
-
-                    # if self.board.current_player.is_check(self.board):
-                    #     self.check_mate = in_check and not has_moves
-                    # else:
-                    #     self.stale_mate = not in_check and not has_moves
-                    #
-                    # if self.check_mate or self.stale_mate:
-                    #     self.move_index = len(self.move_buttons)
-                    #     self.winner = self.board.current_player.opponent()
-                    #     self.selected_piece = self.board.current_player.active_pieces(self.board)[0]
-                    #     self.board_states.append(copy.deepcopy(self.board))
-                    #     self.add_move_button()
-                    #     self.restart_button.show()
-
-                    self.update()
+                self.update()
             else:
                 piece = self.board.state[position]
                 if piece is not None:
@@ -468,7 +459,7 @@ class BoardView(QWidget):
 
             piece = pieces[self.sender().objectName()]
 
-            self.promotion_move.promotion_to = piece
+            self.promotion_move.piece_to_promote = piece
             self.board.moves_done.append(self.promotion_move)
             self.board.current_player.moves_done.append(self.promotion_move)
             self.board_states.append(copy.deepcopy(self.board))

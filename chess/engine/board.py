@@ -23,9 +23,6 @@ class Board:
         self.state: list[Piece | None] = []
         self.moves: list[Move] = []
 
-        self.white_pieces = set()
-        self.black_pieces = set()
-
         self.white_king = None
         self.black_king = None
 
@@ -44,7 +41,7 @@ class Board:
         )
 
     def get_pieces_in_row(self, row_index: int) -> list[Piece]:
-        return self.state[row_index * 8 : 8 + row_index * 8]
+        return self.state[row_index * 8: 8 + row_index * 8]
 
     def get_pieces_in_column(self, column_index: int) -> list[Piece]:
         return self.state[column_index:64:8]
@@ -127,14 +124,30 @@ class Board:
         return fen_string
 
     def set_piece_at(self, position: int, piece: Piece | None) -> None:
+        self.state[position] = piece
         if piece is not None:
-            self.state[position], self.state[piece.position] = piece, None
             piece.position = position
-        else:
-            self.state[position] = piece
 
     def get_piece_at(self, position: int) -> Piece | None:
         return self.state[position]
+
+    @property
+    def white_pieces(self) -> set[Piece]:
+        return {
+            piece for piece in self.state
+            if piece is not None
+               and piece.alliance == Alliance.WHITE
+               and piece.is_active
+        }
+
+    @property
+    def black_pieces(self) -> set[Piece]:
+        return {
+            piece for piece in self.state
+            if piece is not None
+               and piece.alliance == Alliance.BLACK
+               and piece.is_active
+        }
 
     def get_available_pieces(self, alliance: Alliance) -> set[Piece]:
         if alliance == Alliance.WHITE:
@@ -142,22 +155,19 @@ class Board:
         return self.black_pieces
 
     def all_active_pieces(self) -> set[Piece]:
-        return self.get_available_pieces(Alliance.WHITE).union(
-            self.get_available_pieces(Alliance.BLACK)
-        )
+        return self.white_pieces.union(self.black_pieces)
 
     def next_turn(self) -> None:
         self.active_player = (
-            Alliance.WHITE if self.active_player == Alliance.BLACK else Alliance.WHITE
+            Alliance.WHITE if self.active_player == Alliance.BLACK else Alliance.BLACK
         )
         self.halfmove_clock += 1
         self.fullmove_number += 0.5
 
-        for piece in self.get_available_pieces(self.active_player):
+        for piece in self.all_active_pieces():
             piece.calculate_legal_moves(self)
 
     def is_checked(self, alliance: Alliance) -> bool:
-
         king = self.white_king if alliance == Alliance.WHITE else self.black_king
         pieces = self.get_available_pieces(alliance.opponent())
 
@@ -167,6 +177,23 @@ class Board:
                     return True
 
         return False
+
+    def get_active_players_king(self) -> King:
+        if self.active_player == Alliance.WHITE: return self.white_king
+        return self.black_king
+
+    def undo(self) -> None:
+        if not self.moves: return
+
+        self.moves.pop(-1).undo(self)
+        self.fullmove_number -= 0.5
+        self.halfmove_clock -= 1
+
+        self.next_turn()
+
+    def get_last_move(self) -> Move | None:
+        if not self.moves: return None
+        return self.moves[-1]
 
 
 def is_valid_position(position: int) -> bool:
@@ -184,13 +211,3 @@ def coordinate_to_position(coordinate: str) -> int:
         raise IndexError("Out of bounds.")
     y = 8 - int(index)
     return y * 8 + (ord(letter) - ord("a"))
-
-
-def main() -> None:
-    FEN = DEFAULT_BOARD_STATE
-    board = Board(FEN)
-    print(board)
-
-
-if __name__ == "__main__":
-    main()

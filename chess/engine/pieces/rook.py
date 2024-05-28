@@ -44,6 +44,8 @@ class Rook(Piece):
                         self.legal_moves.add(AttackMove(self, possible_target, piece_on_tile))
                     break
 
+        return self.legal_moves
+
 
 def is_first_column_exclusion(position: int, offset: int) -> bool:
     return position % 8 == 0 and offset == -1

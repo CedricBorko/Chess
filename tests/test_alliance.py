@@ -1,12 +1,6 @@
 from unittest import TestCase
 
 from chess.engine.alliance import Alliance
-from chess.engine.board import (
-    Board,
-    is_valid_position,
-    coordinate_to_position,
-    position_to_coordinate,
-)
 
 
 class TestAlliance(TestCase):

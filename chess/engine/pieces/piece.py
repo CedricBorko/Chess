@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from chess.engine.alliance import Alliance
 from chess.engine.move import Move
 
-
 if TYPE_CHECKING:
     from chess.engine.board import Board
 
@@ -21,8 +20,13 @@ class Piece(ABC):
         if self.alliance == Alliance.BLACK:
             self.abbreviation = self.abbreviation.lower()
 
-        self.has_moved = False
+        self.move_count = 0
+        self.is_active = True
         self.legal_moves: set[Move] = set()
+
+    @property
+    def has_moved(self) -> bool:
+        return self.move_count > 0
 
     def __repr__(self):
         return self.abbreviation
@@ -32,6 +36,7 @@ class Piece(ABC):
 
     def show(self):
         from chess.engine.board import position_to_coordinate
+
         return f"{self.abbreviation} {position_to_coordinate(self.position)}"
 
     def is_black(self):
