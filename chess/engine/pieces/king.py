@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from chess.engine.board import Board
@@ -30,50 +30,54 @@ class King(Piece):
             if is_valid_position(possible_target):
                 self.check_standard_moves(board, possible_target, offset)
 
-                # CASTLE
-                if not any((castle_availability := self.can_castle(board))): continue
+                if not any((castle_availability := self.can_castle(board))):
+                    continue
+
                 if (
-                    offset == KING_SIDE_CASTLE and
-                    castle_availability[0] and
-                    self.tiles_for_castling_are_save_and_clear(board, 2)
+                    offset == KING_SIDE_CASTLE
+                    and castle_availability[0]
+                    and self.tiles_for_castling_are_save_and_clear(
+                        board, is_king_side=True
+                    )
                 ):
+
                     possible_rook = board.get_piece_at(possible_target + 2)
                     if (
-                        isinstance(possible_rook, Rook) and
-                        not possible_rook.has_moved and
-                        possible_rook.alliance == self.alliance
+                        isinstance(possible_rook, Rook)
+                        and not possible_rook.has_moved
+                        and possible_rook.alliance == self.alliance
                     ):
                         self.legal_moves.add(
                             CastleMove(
-                                self,
-                                possible_rook.position - 1,
-                                is_king_side=True
+                                self, possible_rook.position - 1, is_king_side=True
                             )
                         )
 
                 elif (
-                    offset == QUEEN_SIDE_CASTLE and
-                    castle_availability[0] and
-                    self.tiles_for_castling_are_save_and_clear(board, -3)
+                    offset == QUEEN_SIDE_CASTLE
+                    and castle_availability[1]
+                    and self.tiles_for_castling_are_save_and_clear(
+                        board, is_king_side=False
+                    )
                 ):
                     possible_rook = board.get_piece_at(possible_target - 3)
                     if (
-                        isinstance(possible_rook, Rook) and
-                        not possible_rook.has_moved and
-                        possible_rook.alliance == self.alliance
+                        isinstance(possible_rook, Rook)
+                        and not possible_rook.has_moved
+                        and possible_rook.alliance == self.alliance
                     ):
                         self.legal_moves.add(
                             CastleMove(
-                                self,
-                                possible_rook.position + 2,
-                                is_king_side=False
+                                self, possible_rook.position + 2, is_king_side=False
                             )
                         )
 
         return self.legal_moves
 
     def check_standard_moves(self, board: Board, target: int, offset: int) -> None:
-        if self.is_first_column_exclusion(offset) or self.is_eighth_column_exclusion(offset):
+        if self.is_first_column_exclusion(offset) or self.is_eighth_column_exclusion(
+            offset
+        ):
             return
 
         piece_on_tile = board.state[target]
@@ -90,21 +94,21 @@ class King(Piece):
     def is_eighth_column_exclusion(self, offset: int) -> bool:
         return self.position % 8 == 7 and offset in (-7, 1, 9)
 
-    def tiles_for_castling_are_save_and_clear(self, board: Board, offset: int):
+    def tiles_for_castling_are_save_and_clear(self, board: Board, is_king_side: bool):
         from chess.engine.board import is_valid_position
 
-        direction_multiplier = 1 if offset > 0 else -1
-        offsets = set(range(1, abs(offset) + 1))
+        offsets = {1, 2} if is_king_side else {-1, -2, -3}
 
         path_is_clear = all(
             (
-                is_valid_position(self.position + i * direction_multiplier)
-                and board.get_piece_at(self.position + i * direction_multiplier) is None
-                for i in offsets
+                is_valid_position(self.position + offset)
+                and board.get_piece_at(self.position + offset) is None
+                for offset in offsets
             )
         )
 
-        if not path_is_clear: return False
+        if not path_is_clear:
+            return False
 
         for piece in board.get_available_pieces(board.active_player.opponent()):
             for move in piece.legal_moves:
@@ -115,6 +119,12 @@ class King(Piece):
 
     def can_castle(self, board: Board) -> tuple[bool, bool]:
         if self.alliance == Alliance.WHITE:
-            return "K" in board.castling_availability, "Q" in board.castling_availability
+            return (
+                "K" in board.castling_availability and not self.has_moved,
+                "Q" in board.castling_availability and not self.has_moved,
+            )
 
-        return "k" in board.castling_availability, "q" in board.castling_availability
+        return (
+            "k" in board.castling_availability and not self.has_moved,
+            "q" in board.castling_availability and not self.has_moved,
+        )

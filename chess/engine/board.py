@@ -5,6 +5,8 @@ from chess.engine.move import Move
 from chess.engine.pieces import King, Piece
 
 DEFAULT_BOARD_STATE = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+NO_PAWN_BOARD_STATE = "rnbqkbnr/8/8/8/8/8/8/RNBQKBNR w KQkq - 0 1"
+KING_AND_ROOK_ONLY = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1"
 PIECE_ABBREVIATIONS = "kqrbnpKQRBNP"
 
 LETTERS = "abcdefgh"
@@ -13,7 +15,7 @@ COORDINATES = [f"{letter}{index}" for index in range(8, 0, -1) for letter in LET
 
 
 class Board:
-    def __init__(self, fen_string: str = DEFAULT_BOARD_STATE) -> None:
+    def __init__(self, fen_string: str = KING_AND_ROOK_ONLY) -> None:
         self.active_player = Alliance.WHITE
         self.castling_availability = "KQkq"
         self.en_passant_target_square = None
@@ -41,7 +43,7 @@ class Board:
         )
 
     def get_pieces_in_row(self, row_index: int) -> list[Piece]:
-        return self.state[row_index * 8: 8 + row_index * 8]
+        return self.state[row_index * 8 : 8 + row_index * 8]
 
     def get_pieces_in_column(self, column_index: int) -> list[Piece]:
         return self.state[column_index:64:8]
@@ -134,19 +136,21 @@ class Board:
     @property
     def white_pieces(self) -> set[Piece]:
         return {
-            piece for piece in self.state
+            piece
+            for piece in self.state
             if piece is not None
-               and piece.alliance == Alliance.WHITE
-               and piece.is_active
+            and piece.alliance == Alliance.WHITE
+            and piece.is_active
         }
 
     @property
     def black_pieces(self) -> set[Piece]:
         return {
-            piece for piece in self.state
+            piece
+            for piece in self.state
             if piece is not None
-               and piece.alliance == Alliance.BLACK
-               and piece.is_active
+            and piece.alliance == Alliance.BLACK
+            and piece.is_active
         }
 
     def get_available_pieces(self, alliance: Alliance) -> set[Piece]:
@@ -156,6 +160,13 @@ class Board:
 
     def all_active_pieces(self) -> set[Piece]:
         return self.white_pieces.union(self.black_pieces)
+
+    def active_player_can_move(self) -> bool:
+        for piece in self.get_active_players_pieces():
+            if piece.legal_moves:
+                return True
+
+        return False
 
     def next_turn(self) -> None:
         self.active_player = (
@@ -178,12 +189,19 @@ class Board:
 
         return False
 
+    def get_active_players_pieces(self) -> set[Piece]:
+        if self.active_player == Alliance.WHITE:
+            return self.white_pieces
+        return self.black_pieces
+
     def get_active_players_king(self) -> King:
-        if self.active_player == Alliance.WHITE: return self.white_king
+        if self.active_player == Alliance.WHITE:
+            return self.white_king
         return self.black_king
 
     def undo(self) -> None:
-        if not self.moves: return
+        if not self.moves:
+            return
 
         self.moves.pop(-1).undo(self)
         self.fullmove_number -= 0.5
@@ -192,7 +210,8 @@ class Board:
         self.next_turn()
 
     def get_last_move(self) -> Move | None:
-        if not self.moves: return None
+        if not self.moves:
+            return None
         return self.moves[-1]
 
 
