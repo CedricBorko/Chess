@@ -35,7 +35,7 @@ class Pawn(Piece):
                     if self.position // 8 == 1 and self.alliance == Alliance.WHITE:
                         self.legal_moves.add(PromotionMove(self, possible_target))
 
-                    elif self.position // 8 == 6 and self.alliance == "Black":  # Promotion Black Pawn
+                    elif self.position // 8 == 6 and self.alliance == Alliance.BLACK:  # Promotion Black Pawn
                         self.legal_moves.add(PromotionMove(self, possible_target))
 
                     else:
