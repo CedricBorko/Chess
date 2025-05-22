@@ -52,7 +52,7 @@ def is_eighth_column_exclusion(position: int, offset: int) -> bool:
     return position % 8 == 7 and offset in (-7, 9)
 
 
-def is_restricted_move(positon: int, offset: int) -> bool:
-    return is_first_column_exclusion(positon, offset) or is_eighth_column_exclusion(
-        positon, offset
+def is_restricted_move(position: int, offset: int) -> bool:
+    return is_first_column_exclusion(position, offset) or is_eighth_column_exclusion(
+        position, offset
     )
