@@ -15,7 +15,7 @@ class Queen(Piece):
     def __init__(self, position: int, alliance: Alliance) -> None:
         super().__init__(position, alliance)
 
-    def calculate_legal_moves(self, board: Board):
+    def calculate_legal_moves(self, board: Board) -> set[Move]:
         from chess.engine.board import is_valid_position
 
         self.legal_moves.clear()
@@ -42,6 +42,8 @@ class Queen(Piece):
                             AttackMove(self, possible_target, piece_on_tile)
                         )
                     break
+
+        return self.legal_moves
 
 
 def is_first_column_exclusion(position: int, offset: int) -> bool:
