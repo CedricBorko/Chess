@@ -53,7 +53,7 @@ class Pawn(Piece):
                     ):
                         self.legal_moves.add(PawnJumpMove(self, possible_target, position_in_between))
 
-                # Attack and En passant move right
+                # Attack and en passant moves
                 elif offset in (7, 9):
                     if offset == 7 and (self.position % 8 == 7 and self.is_white() or
                                         self.position % 8 == 0 and self.is_black()):
